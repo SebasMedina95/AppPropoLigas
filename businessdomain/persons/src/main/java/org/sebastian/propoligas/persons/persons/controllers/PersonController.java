@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import org.sebastian.propoligas.persons.persons.common.dtos.PaginationDto;
 import org.sebastian.propoligas.persons.persons.common.utils.ApiResponse;
 import org.sebastian.propoligas.persons.persons.common.utils.CustomPagedResourcesAssembler;
+import org.sebastian.propoligas.persons.persons.common.utils.ErrorsValidationsResponse;
+import org.sebastian.propoligas.persons.persons.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.persons.persons.entities.PersonEntity;
 import org.sebastian.propoligas.persons.persons.entities.dtos.create.CreatePersonDto;
 import org.sebastian.propoligas.persons.persons.entities.dtos.update.UpdatePersonDto;
@@ -42,6 +44,20 @@ public class PersonController {
             BindingResult result
     ){
 
+        //Validación de campos
+        if(result.hasFieldErrors()){
+            ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            errors.validation(result),
+                            new ApiResponse.Meta(
+                                    "Errores en los campos de creación",
+                                    HttpStatus.BAD_REQUEST.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse<>(
                         null,
@@ -62,6 +78,20 @@ public class PersonController {
             BindingResult result
     ){
 
+        //Validación de campos
+        if(result.hasFieldErrors()){
+            ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            errors.validation(result),
+                            new ApiResponse.Meta(
+                                    "Errores en los campos de paginación",
+                                    HttpStatus.BAD_REQUEST.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse<>(
                         null,
@@ -79,6 +109,24 @@ public class PersonController {
     public ResponseEntity<ApiResponse<PersonEntity>> findById(
             @PathVariable String id
     ){
+
+        ResponseWrapper<PersonEntity> personGet;
+
+        //Validación del ID
+        try {
+            Long personId = Long.parseLong(id);
+            personGet = personService.findById(personId);
+        }catch (NumberFormatException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El ID proporcionado es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse<>(
@@ -100,6 +148,38 @@ public class PersonController {
             BindingResult result,
             @PathVariable String id
     ){
+
+        ResponseWrapper<PersonEntity> personUpdate;
+
+        //Validación del ID
+        try {
+            Long personId = Long.parseLong(id);
+            personUpdate = personService.update(personId, personRequest);
+        }catch (NumberFormatException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El ID proporcionado es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        //Validación de campos
+        if(result.hasFieldErrors()){
+            ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            errors.validation(result),
+                            new ApiResponse.Meta(
+                                    "Errores en los campos de actualización",
+                                    HttpStatus.BAD_REQUEST.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse<>(
