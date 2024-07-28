@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: propoligas_persons
       POSTGRES_DB: propoligas_persons_db
       POSTGRES_PASSWORD: propoligas_persons123
-    container_name: apppropoligas_persons
+    container_name: apppropoligas_ms_persons
     volumes:
       - ./containers/postgres:/var/lib/postgresql/data
     ports:
