@@ -1,6 +1,7 @@
 package org.sebastian.propoligas.persons.persons.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.sebastian.propoligas.persons.persons.common.dtos.PaginationDto;
@@ -58,12 +59,44 @@ public class PersonController {
                     ));
         }
 
-        return ResponseEntity.status(HttpStatus.OK)
+        //Validación de número de documento
+        try{
+            Long.parseLong(personRequest.getDocumentNumber());
+        }catch (Exception ex){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El número de documento proporcionado es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        //? Intentamos realizar el registro
+        ResponseWrapper<PersonEntity> personNew = personService.create(personRequest);
+
+        //? Si no ocurre algún error, entonces registramos :)
+        if( personNew.getData() != null ){
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>(
+                            personNew.getData(),
+                            new ApiResponse.Meta(
+                                    "Persona Registrada Correctamente.",
+                                    HttpStatus.CREATED.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        //? Estamos en este punto, el registro no fue correcto
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
                         null,
                         new ApiResponse.Meta(
-                                "Crear persona - Prueba método",
-                                HttpStatus.OK.value(),
+                                personNew.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
                         )
                 ));
@@ -105,7 +138,13 @@ public class PersonController {
     }
 
     @GetMapping("/find-by-id/{id}")
-    @Operation(summary = "Obtener comodidades por ID", description = "Obtener una persona dado el ID")
+    @Operation(
+            summary = "Obtener comodidades por ID",
+            description = "Obtener una persona dado el ID",
+            parameters = {
+                    @Parameter(name = "id", description = "ID de la persona a obtener", required = true)
+            }
+    )
     public ResponseEntity<ApiResponse<PersonEntity>> findById(
             @PathVariable String id
     ){
@@ -141,7 +180,13 @@ public class PersonController {
     }
 
     @PutMapping("update-by-id/{id}")
-    @Operation(summary = "Actualizar una persona", description = "Actualizar una persona dado el ID")
+    @Operation(
+            summary = "Actualizar una persona",
+            description = "Actualizar una persona dado el ID",
+            parameters = {
+                    @Parameter(name = "id", description = "ID para la actualización", required = true)
+            }
+    )
     public ResponseEntity<ApiResponse<Object>> update(
             @Valid
             @RequestBody UpdatePersonDto personRequest,
@@ -194,7 +239,13 @@ public class PersonController {
     }
 
     @DeleteMapping("/delete-by-id/{id}")
-    @Operation(summary = "Eliminar una comodidad", description = "Eliminar una persona pero de manera lógica")
+    @Operation(
+            summary = "Eliminar una comodidad",
+            description = "Eliminar una persona pero de manera lógica",
+            parameters = {
+                    @Parameter(name = "id", description = "ID de la persona a eliminar", required = true)
+            }
+    )
     public ResponseEntity<ApiResponse<PersonEntity>> delete(
             @PathVariable String id
     ){

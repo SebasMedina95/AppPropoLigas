@@ -50,6 +50,10 @@ public class PersonEntity {
     @Comment("Email de la persona")
     private String email;
 
+    @Column(name = "GENDER", nullable = false, length = 1 )
+    @Comment("Sexo de la persona")
+    private String gender;
+
     @Column(name = "PHONE_1", nullable = false, length = 20 )
     @Comment("Primer Teléfono de la persona")
     private String phone1;
