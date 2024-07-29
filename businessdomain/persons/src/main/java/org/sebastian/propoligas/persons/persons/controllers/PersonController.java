@@ -14,10 +14,17 @@ import org.sebastian.propoligas.persons.persons.entities.dtos.create.CreatePerso
 import org.sebastian.propoligas.persons.persons.entities.dtos.update.UpdatePersonDto;
 import org.sebastian.propoligas.persons.persons.services.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 
@@ -125,28 +132,36 @@ public class PersonController {
                     ));
         }
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new ApiResponse<>(
-                        null,
-                        new ApiResponse.Meta(
-                                "Listado personas - Prueba método",
-                                HttpStatus.OK.value(),
-                                LocalDateTime.now()
-                        )
-                ));
+        if (paginationDto.getPage() < 1) paginationDto.setPage(1); //Para controlar la página 0, y que la paginación arranque en 1.
+
+        Sort.Direction direction = paginationDto.getOrder().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(paginationDto.getPage() - 1, paginationDto.getSize(), Sort.by(direction, paginationDto.getSort())); //Generando el esquema de paginación para aplicar y ordenamiento
+        Page<PersonEntity> comforts = personService.findAll(paginationDto.getSearch(), pageable); //Aplicando la paginación JPA -> Incorporo el buscador
+        UriComponentsBuilder uriBuilder = ServletUriComponentsBuilder.fromCurrentRequestUri(); //Para la obtención de la URL
+
+        PagedModel<PersonEntity> pagedModel = customPagedResourcesAssembler.toModel(comforts, uriBuilder);
+
+        return ResponseEntity.ok(new ApiResponse<>(
+                pagedModel,
+                new ApiResponse.Meta(
+                        "Listado de personas.",
+                        HttpStatus.OK.value(),
+                        LocalDateTime.now()
+                )
+        ));
 
     }
 
     @GetMapping("/find-by-id/{id}")
     @Operation(
-            summary = "Obtener comodidades por ID",
+            summary = "Obtener persona por ID",
             description = "Obtener una persona dado el ID",
             parameters = {
                     @Parameter(name = "id", description = "ID de la persona a obtener", required = true)
             }
     )
     public ResponseEntity<ApiResponse<PersonEntity>> findById(
-            @PathVariable String id
+            @PathVariable("id") String id
     ){
 
         ResponseWrapper<PersonEntity> personGet;
@@ -167,12 +182,24 @@ public class PersonController {
                     ));
         }
 
-        return ResponseEntity.status(HttpStatus.OK)
+        if( personGet.getData() != null ){
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            personGet.getData(),
+                            new ApiResponse.Meta(
+                                    "Persona obtenida por ID.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
                         null,
                         new ApiResponse.Meta(
-                                "Obtener persona por ID - Prueba método",
-                                HttpStatus.OK.value(),
+                                personGet.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
                         )
                 ));
@@ -191,7 +218,7 @@ public class PersonController {
             @Valid
             @RequestBody UpdatePersonDto personRequest,
             BindingResult result,
-            @PathVariable String id
+            @PathVariable("id") String id
     ){
 
         ResponseWrapper<PersonEntity> personUpdate;
@@ -226,12 +253,24 @@ public class PersonController {
                     ));
         }
 
-        return ResponseEntity.status(HttpStatus.OK)
+        if( personUpdate.getData() != null ){
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            personUpdate.getData(),
+                            new ApiResponse.Meta(
+                                    "Persona Actualizada Correctamente.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
                         null,
                         new ApiResponse.Meta(
-                                "Actualizar persona por ID - Prueba método",
-                                HttpStatus.OK.value(),
+                                personUpdate.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
                         )
                 ));
@@ -247,15 +286,44 @@ public class PersonController {
             }
     )
     public ResponseEntity<ApiResponse<PersonEntity>> delete(
-            @PathVariable String id
+            @PathVariable("id") String id
     ){
 
-        return ResponseEntity.status(HttpStatus.OK)
+        ResponseWrapper<PersonEntity> personUpdate;
+
+        try {
+            Long personId = Long.parseLong(id);
+            personUpdate = personService.delete(personId);
+        }catch (NumberFormatException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El ID proporcionado es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        if( personUpdate.getData() != null ){
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            personUpdate.getData(),
+                            new ApiResponse.Meta(
+                                    "Persona Eliminada Correctamente.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
                         null,
                         new ApiResponse.Meta(
-                                "Eliminar persona por ID - Prueba método",
-                                HttpStatus.OK.value(),
+                                personUpdate.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
                         )
                 ));

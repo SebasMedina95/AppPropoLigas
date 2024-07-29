@@ -37,6 +37,10 @@ public class UpdatePersonDto {
     @Size(min = 3, max = 150, message = "El email de la persona no debe sobrepasar los 150")
     private String email;
 
+    @NotEmpty(message = "El género de la persona es requerido")
+    @Size(min = 1, max = 1, message = "El género de la persona no debe sobrepasar los 1")
+    private String gender;
+
     @NotEmpty(message = "El primer número contacto de la persona es requerido")
     @Size(min = 7, max = 20, message = "El primer numero contacto de la persona debe ser mínimo de 7 caracteres y máximo de 20")
     private String phone1;

@@ -13,4 +13,10 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long>, Jpa
     @Query("SELECT p FROM PersonEntity p WHERE UPPER(p.email) = UPPER(:email) OR p.documentNumber = :documentNumber")
     Optional<PersonEntity> getPersonByDocumentAndByEmail(@Param("email") String email, @Param("documentNumber") String documentNumber);
 
+    @Query("SELECT p FROM PersonEntity p WHERE (UPPER(p.email) = UPPER(:personEmail) OR p.documentNumber = :personDocument) AND p.id <> :id")
+    Optional<PersonEntity> getPersonByDocumentAndEmailForEdit(
+            @Param("personEmail") String personEmail,
+            @Param("personDocument") String personDocument,
+            @Param("id") Long id);
+
 }
