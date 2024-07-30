@@ -11,10 +11,10 @@
 	</parent>
 
 	<groupId>org.sebastian.propoligas</groupId>
-	<artifactId>persons</artifactId>
+	<artifactId>sportsman</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>persons</name>
-	<description>Micro Servicio de Personas</description>
+	<name>sportsman</name>
+	<description>Micro Servicio de Deportistas</description>
 	<packaging>jar</packaging>
 
 	<!-- LAS DEPENDENCIAS NO IRÍAN PORQUE EL PADRE YA LAS TIENE DEFINIDAS -->

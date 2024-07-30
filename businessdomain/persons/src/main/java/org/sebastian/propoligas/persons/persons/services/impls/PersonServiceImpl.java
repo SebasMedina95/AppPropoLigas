@@ -110,7 +110,7 @@ public class PersonServiceImpl implements PersonService {
                 return new ResponseWrapper<>(person, "Persona encontrada por ID correctamente");
             }
 
-            logger.info("La comodidad no pudo ser encontrada cone el ID {}", id);
+            logger.info("La persona no pudo ser encontrada cone el ID {}", id);
             return new ResponseWrapper<>(null, "La persona no pudo ser encontrado por el ID " + id);
 
         }catch (Exception err) {
