@@ -5,7 +5,7 @@ import org.sebastian.propoligas.sportsman.sportsman.clients.PersonClientRest;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.sportsman.sportsman.models.Persons;
-import org.sebastian.propoligas.sportsman.sportsman.models.dtos.CreateSportsManDto;
+import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.PersonsSportsManRelation;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
 import org.sebastian.propoligas.sportsman.sportsman.repositories.PersonsSportsManRelationRepository;
@@ -15,8 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -44,36 +46,112 @@ public class SportsManServiceImpl implements SportsManService {
     }
 
     @Override
+    @Transactional
     public ResponseWrapper<SportsManEntity> create(CreateSportsManDto sportsMan) {
 
+        logger.info("Iniciando guardado de deportista");
         Persons personData;
         Long personIdMs = sportsMan.getPersonsSportsManRelationId();
         try{
-            ApiResponse<Persons> personMsvc = personClientRest.getPerson(personIdMs);
-            personData = personMsvc.getData();
+
+            personData = this.getPersonOfMsPersons(personIdMs);
             if( personData == null ){
-                return new ResponseWrapper<>(null, "La persona para ser asociada al deportista no fue hallada");
+                return new ResponseWrapper<>(
+                        null,
+                        "La persona para ser asociada al deportista no fue hallada"
+                );
             }
+
         }catch (FeignException fe){
-            logger.error("Ocurrió un error al intentar obtener la persona del MS Persons, error: {}", fe);
-            return new ResponseWrapper<>(null, "La persona para ser asociada al deportista no fue hallada");
+            logger.error("Ocurrió un error al intentar obtener la persona del MS Persons, error: ", fe);
+            return new ResponseWrapper<>(
+                    null, "La persona para ser asociada al deportista no fue hallada"
+            );
         }
 
         //? Debemos revisar que el deportista no se halle registrado a nivel de persona, no puede estar más de una vez.
-        Optional<PersonsSportsManRelation> optionalGetRelationalPerson = personsSportsManRelationRepository.getRelationalPerson(personIdMs);
-        if(optionalGetRelationalPerson.isPresent())
-            return new ResponseWrapper<>(null, "La persona ya se encuentra asociada como deportista");
+        Optional<PersonsSportsManRelation> optionalGetRelationalPerson =
+                personsSportsManRelationRepository.getRelationalPerson(personIdMs);
+
+        if(optionalGetRelationalPerson.isPresent()){
+            logger.error("La persona ya se encuentra registrada a nivel de deportista");
+            return new ResponseWrapper<>(
+                    null, "La persona ya se encuentra asociada como deportista");
+        }
 
         //? Generemos el carnet (Combinación de documento con 4 dígitos aleatorios)
         String generateCarnet = "CT-" + personData.getDocumentNumber() + "-" + this.generateRandomString();
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-        System.out.println(generateCarnet);
-        System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
-        return null;
+        //? ******************************
+        //? Pendiente el tema de la imagen
+        //? ******************************
+
+        //? Guardamos primero la relación
+        PersonsSportsManRelation newPersonsSportsManRelation = new PersonsSportsManRelation();
+        newPersonsSportsManRelation.setPersonId(personData.getId());
+        PersonsSportsManRelation relationPerson =
+                personsSportsManRelationRepository.save(newPersonsSportsManRelation);
+
+        SportsManEntity newSportMan = new SportsManEntity();
+        newSportMan.setCarnet(generateCarnet);
+        newSportMan.setNumberShirt(sportsMan.getNumberShirt());
+        newSportMan.setWeight(sportsMan.getWeight());
+        newSportMan.setHeight(sportsMan.getHeight());
+        newSportMan.setBloodType(sportsMan.getBloodType());
+        newSportMan.setStartingPlayingPosition(sportsMan.getStartingPlayingPosition());
+        newSportMan.setCaptain(sportsMan.getCaptain());
+        newSportMan.setPhotoUrl("default.png");
+        newSportMan.setDescription(sportsMan.getDescription());
+        newSportMan.setPersonsSportsManRelation(relationPerson);
+        newSportMan.setStatus(true); //* Por defecto entra en true
+        newSportMan.setUserCreated(dummiesUser); //! Ajustar cuando se implemente Security
+        newSportMan.setDateCreated(new Date()); //! Ajustar cuando se implemente Security
+        newSportMan.setUserUpdated(dummiesUser); //! Ajustar cuando se implemente Security
+        newSportMan.setDateUpdated(new Date()); //! Ajustar cuando se implemente Security
+
+        //? Guardamos y devolvemos al deportista
+        logger.info("Deportista guardado correctamente");
+        return new ResponseWrapper<>(
+                sportsManServiceRepository.save(newSportMan),
+                "El deportista fue creado correctamente"
+        );
 
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseWrapper<SportsManEntity> findById(Long id) {
+
+        logger.info("Iniciando Acción - Obtener un deportista dado su ID");
+
+        try{
+
+            Optional<SportsManEntity> sportsManOptional = sportsManServiceRepository.findById(id);
+
+            if( sportsManOptional.isPresent() ){
+                SportsManEntity sportMan = sportsManOptional.orElseThrow();
+                logger.info("Deportista obtenido por su ID");
+
+                Persons getPersonMS = this.getPersonOfMsPersons(sportMan.getPersonsSportsManRelation().getPersonId());
+                sportMan.setPerson(getPersonMS);
+
+                return new ResponseWrapper<>(sportMan, "Deportista encontrado por ID correctamente");
+
+            }
+
+            logger.info("El deportista no pudo ser encontrada cone el ID {}", id);
+            return new ResponseWrapper<>(null, "El deportista no pudo ser encontrado por el ID " + id);
+
+        }catch (Exception err) {
+
+            logger.error("Ocurrió un error al intentar obtener deportista por ID, detalles ...", err);
+            return new ResponseWrapper<>(null, "El deportista no pudo ser encontrado por el ID");
+
+        }
+
+    }
+
+    // MÉTODOS ADICIONALES.
     private String generateRandomString() {
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -90,6 +168,26 @@ public class SportsManServiceImpl implements SportsManService {
         }
 
         return stringBuilder.toString();
+    }
+
+    //Centralizamos el obtener Person por ID para reusarlo.
+    private Persons getPersonOfMsPersons(Long personId){
+
+        try{
+
+            //? Ahora hallemos la persona en su MS
+            Persons personData;
+            ApiResponse<Persons> personMsvc =
+                    personClientRest.getPerson(personId);
+            personData = personMsvc.getData();
+
+            return personData;
+
+        }catch (FeignException fe){
+            logger.error("No pudimos obtener la persona del MS Persons, error: ", fe);
+            return null;
+        }
+
     }
 
 }

@@ -6,17 +6,14 @@ import jakarta.validation.Valid;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ErrorsValidationsResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
-import org.sebastian.propoligas.sportsman.sportsman.models.dtos.CreateSportsManDto;
+import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
 import org.sebastian.propoligas.sportsman.sportsman.services.SportsManService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
@@ -78,6 +75,54 @@ public class SportsManController {
                         null,
                         new ApiResponse.Meta(
                                 sportManNew.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
+                                LocalDateTime.now()
+                        )
+                ));
+
+    }
+
+    @GetMapping("/find-by-id/{id}")
+    @Operation(summary = "Obtener deportista por ID", description = "Obtener un deportista dado el ID")
+    public ResponseEntity<ApiResponse<Object>> findById(
+            @PathVariable("id") String id
+    ){
+
+        ResponseWrapper<SportsManEntity> comfort;
+
+        //Validamos que el ID que nos proporcionan por la URL sea válido
+        try {
+            Long comfortId = Long.parseLong(id);
+            comfort = sportsManService.findById(comfortId);
+        }catch (NumberFormatException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El ID proporcionado para la búsqueda es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        if( comfort.getData() != null ){
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            comfort.getData(),
+                            new ApiResponse.Meta(
+                                    "Deportista obtenido por ID.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        null,
+                        new ApiResponse.Meta(
+                                comfort.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
                         )
