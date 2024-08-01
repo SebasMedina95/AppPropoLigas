@@ -3,6 +3,7 @@ package org.sebastian.propoligas.sportsman.sportsman.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.sebastian.propoligas.sportsman.sportsman.common.dtos.PaginationDto;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ErrorsValidationsResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
@@ -10,10 +11,17 @@ import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSpo
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
 import org.sebastian.propoligas.sportsman.sportsman.services.SportsManService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 
@@ -79,6 +87,45 @@ public class SportsManController {
                                 LocalDateTime.now()
                         )
                 ));
+
+    }
+
+    @GetMapping("/find-all")
+    @Operation(summary = "Obtener todos los deportistas", description = "Obtener todos los deportistas con paginación y también aplicando filtros")
+    public ResponseEntity<ApiResponse<Object>> findAll(
+            @Valid
+            @RequestBody PaginationDto paginationDto,
+            BindingResult result
+    ){
+
+        //Validación de campos
+        if(result.hasFieldErrors()){
+            ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            errors.validation(result),
+                            new ApiResponse.Meta(
+                                    "Errores en los campos",
+                                    HttpStatus.BAD_REQUEST.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(
+                sportsManService.findAll(
+                        paginationDto.getPage(),
+                        paginationDto.getSize(),
+                        paginationDto.getSearch(),
+                        paginationDto.getOrder(),
+                        paginationDto.getSort())
+                ,
+                new ApiResponse.Meta(
+                        "Listado de Deportistas.",
+                        HttpStatus.OK.value(),
+                        LocalDateTime.now()
+                )
+        ));
 
     }
 
