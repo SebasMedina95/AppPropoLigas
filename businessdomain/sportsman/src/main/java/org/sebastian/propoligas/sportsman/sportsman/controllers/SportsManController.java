@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.sebastian.propoligas.sportsman.sportsman.common.dtos.PaginationDto;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
+import org.sebastian.propoligas.sportsman.sportsman.common.utils.CustomPagedResourcesAssembler;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ErrorsValidationsResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
@@ -31,12 +32,15 @@ import java.time.LocalDateTime;
 public class SportsManController {
 
     private final SportsManService sportsManService;
+    private final CustomPagedResourcesAssembler<SportsManEntity> customPagedResourcesAssembler;
 
     @Autowired
     public SportsManController(
-            SportsManService sportsManService
-            ){
+            SportsManService sportsManService,
+            CustomPagedResourcesAssembler<SportsManEntity> customPagedResourcesAssembler
+    ){
         this.sportsManService = sportsManService;
+        this.customPagedResourcesAssembler = customPagedResourcesAssembler;
     }
 
     @PostMapping("/create")
@@ -112,16 +116,19 @@ public class SportsManController {
                     ));
         }
 
+        if (paginationDto.getPage() < 1) paginationDto.setPage(1); //Para controlar la página 0, y que la paginación arranque en 1.
+
+        Sort.Direction direction = paginationDto.getOrder().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(paginationDto.getPage() - 1, paginationDto.getSize(), Sort.by(direction, paginationDto.getSort())); //Generando el esquema de paginación para aplicar y ordenamiento
+        Page<SportsManEntity> comforts = sportsManService.findAll(paginationDto.getSearch(), pageable); //Aplicando la paginación JPA -> Incorporo el buscador
+        UriComponentsBuilder uriBuilder = ServletUriComponentsBuilder.fromCurrentRequestUri(); //Para la obtención de la URL
+
+        PagedModel<SportsManEntity> pagedModel = customPagedResourcesAssembler.toModel(comforts, uriBuilder);
+
         return ResponseEntity.ok(new ApiResponse<>(
-                sportsManService.findAll(
-                        paginationDto.getPage(),
-                        paginationDto.getSize(),
-                        paginationDto.getSearch(),
-                        paginationDto.getOrder(),
-                        paginationDto.getSort())
-                ,
+                pagedModel,
                 new ApiResponse.Meta(
-                        "Listado de Deportistas.",
+                        "Listado de comodidades.",
                         HttpStatus.OK.value(),
                         LocalDateTime.now()
                 )

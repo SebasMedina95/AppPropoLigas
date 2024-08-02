@@ -6,7 +6,6 @@ import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.sportsman.sportsman.models.Persons;
 import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
-import org.sebastian.propoligas.sportsman.sportsman.models.dtos.other.ListSportsManEntity;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.PersonsSportsManRelation;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
 import org.sebastian.propoligas.sportsman.sportsman.repositories.PersonsSportsManRelationRepository;
@@ -16,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +29,6 @@ public class SportsManServiceImpl implements SportsManService {
     private static final String DIGITS = "0123456789";
     private static final String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final String MICRO_API = "/api/sportsman/find-all";
-    private static final String MICRO_API_PAGE = "?page=";
-    private static final String MICRO_API_SIZE = "&size=";
     private static final Logger logger = LoggerFactory.getLogger(SportsManServiceImpl.class);
 
     private final SportsManServiceRepository sportsManServiceRepository;
@@ -126,41 +123,23 @@ public class SportsManServiceImpl implements SportsManService {
     //? La idea es mostrar al deportista con la información de la persona relacionada.
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> findAll(Integer page, Integer size, String search, String order, String sort) {
+    public Page<SportsManEntity> findAll(String search, Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.fromString(order), sort));
-        List<SportsManEntity> sportsMans = sportsManServiceRepository.findAll();
+        logger.info("Obtener todos los deportistas paginados y con filtro");
 
-        List<ListSportsManEntity> filteredList = sportsMans.stream()
-                .map(this::toDTO)
-                .filter(dto -> search == null || search.isEmpty() || matchesSearch(dto, search))
-                .toList();
+        Specification<SportsManEntity> spec = this.searchByFilter(search);
+        Page<SportsManEntity> sportsManPage = sportsManServiceRepository.findAll(spec, pageable);
 
-        int totalElements = filteredList.size();
-        int totalPages = (int) Math.ceil((double) totalElements / size);
+        List<SportsManEntity> sportsManDtos =
+                sportsManPage.getContent().stream().map(sportsMan -> {
+                    Long personId = sportsMan.getPersonsSportsManRelation().getPersonId();
+                    Persons person = getPersonOfMsPersons(personId);
+                    sportsMan.setPerson(person);
+                    return sportsMan;
+                }).toList();
 
-        // Verificar si la página solicitada está dentro del rango válido
-        if (page < 1 || page > totalPages)
-            return Collections.emptyMap();
+        return new PageImpl<>(sportsManDtos, pageable, sportsManPage.getTotalElements());
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredList.size());
-        List<ListSportsManEntity> paginatedList = filteredList.subList(start, end);
-
-        //Conservemos la misma mecánica como si la paginación fuera de tipo JPA/Hibernate
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", paginatedList);
-        response.put(
-                "page",
-                Map.of(
-                "size", size,
-                "totalElements", filteredList.size(),
-                "totalPages", (int) Math.ceil((double) filteredList.size() / size),
-                "number", page
-        ));
-        response.put("links", createLinks(page, size, filteredList.size()));
-
-        return response;
     }
 
     @Override
@@ -235,69 +214,24 @@ public class SportsManServiceImpl implements SportsManService {
 
     }
 
-    private ListSportsManEntity toDTO(SportsManEntity sportsMan) {
-        Persons person = getPersonOfMsPersons(sportsMan.getPersonsSportsManRelation().getPersonId());
-        if (person == null) {
-            // Manejar el caso donde no se pudo obtener la información de la persona
-            logger.warn("No se pudo obtener la información de la persona con ID: {}",
-                    sportsMan.getPersonsSportsManRelation().getPersonId());
-            return null;
-        }
-        return ListSportsManEntity.builder()
-                .id(sportsMan.getId())
-                .carnet(sportsMan.getCarnet())
-                .numberShirt(sportsMan.getNumberShirt())
-                .weight(sportsMan.getWeight())
-                .height(sportsMan.getHeight())
-                .bloodType(sportsMan.getBloodType())
-                .startingPlayingPosition(sportsMan.getStartingPlayingPosition())
-                .captain(sportsMan.getCaptain())
-                .photoUrl(sportsMan.getPhotoUrl())
-                .description(sportsMan.getDescription())
-                .status(sportsMan.getStatus())
-                .userCreated(sportsMan.getUserCreated())
-                .dateCreated(sportsMan.getDateCreated())
-                .userUpdated(sportsMan.getUserUpdated())
-                .dateUpdated(sportsMan.getDateUpdated())
-                .firstName(person.getFirstName())
-                .secondName(person.getSecondName())
-                .firstSurname(person.getFirstSurname())
-                .secondSurname(person.getSecondSurname())
-                .documentNumber(person.getDocumentNumber())
-                .email(person.getEmail())
-                .build();
-    }
+    //* Para el buscador de comodidades.
+    //? Buscarémos tanto por name como por description.
+    //? NOTA: No olvidar el status.
+    public Specification<SportsManEntity> searchByFilter(String search) {
+        return (root, query, criteriaBuilder) -> {
+            if (search == null || search.isEmpty()) {
+                return criteriaBuilder.isTrue(root.get("status"));
+            }
 
-    private boolean matchesSearch(ListSportsManEntity dto, String search) {
-        String lowerCaseSearch = search.toLowerCase();
-        return  dto.getCarnet().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getNumberShirt().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getDescription().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getStartingPlayingPosition().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getFirstName().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getSecondName().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getFirstSurname().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getSecondSurname().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getDocumentNumber().toLowerCase().contains(lowerCaseSearch) ||
-                dto.getEmail().toLowerCase().contains(lowerCaseSearch);
-    }
+            String searchPatternWithUpper = "%" + search.toUpperCase() + "%"; //También podría ser toLowerCase o simplemente "%" + search + "%"
 
-    private List<Map<String, String>> createLinks(int page, int size, int totalElements) {
-        List<Map<String, String>> links = new ArrayList<>();
-        int totalPages = (int) Math.ceil((double) totalElements / size);
-
-        links.add(Map.of("rel", "self" , "href", MICRO_API + MICRO_API_PAGE + page + MICRO_API_SIZE + size));
-        links.add(Map.of("rel", "first", "href", MICRO_API + MICRO_API_PAGE + 1 + MICRO_API_SIZE + size));
-        links.add(Map.of("rel", "last" , "href", MICRO_API + MICRO_API_PAGE + totalPages + MICRO_API_SIZE + size));
-
-        if (page > 1)
-            links.add(Map.of("rel", "prev", "href", MICRO_API + MICRO_API_PAGE + (page - 1) + MICRO_API_SIZE + size));
-
-        if (page < totalPages)
-            links.add(Map.of("rel", "next", "href", MICRO_API + MICRO_API_PAGE + (page + 1) + MICRO_API_SIZE + size));
-
-        return links;
-
+            return criteriaBuilder.and(
+                    criteriaBuilder.isTrue(root.get("status")),
+                    criteriaBuilder.or(
+                            criteriaBuilder.like(root.get("carnet"), searchPatternWithUpper)
+                    )
+            );
+        };
     }
 
 }

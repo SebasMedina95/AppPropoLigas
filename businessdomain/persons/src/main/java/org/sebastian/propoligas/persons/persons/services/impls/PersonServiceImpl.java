@@ -106,7 +106,7 @@ public class PersonServiceImpl implements PersonService {
 
             if( personOptional.isPresent() ){
                 PersonEntity person = personOptional.orElseThrow();
-                logger.info("Comodidad obtenida por su ID");
+                logger.info("Persona obtenida por su ID");
                 return new ResponseWrapper<>(person, "Persona encontrada por ID correctamente");
             }
 

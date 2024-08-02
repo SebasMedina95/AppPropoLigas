@@ -175,7 +175,7 @@ public class PersonController {
                     .body(new ApiResponse<>(
                             null,
                             new ApiResponse.Meta(
-                                    "El ID proporcionado es inválido.",
+                                    "El ID proporcionado para obtener una persona es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
                             )
@@ -232,7 +232,7 @@ public class PersonController {
                     .body(new ApiResponse<>(
                             null,
                             new ApiResponse.Meta(
-                                    "El ID proporcionado es inválido.",
+                                    "El ID proporcionado para actualizar es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
                             )

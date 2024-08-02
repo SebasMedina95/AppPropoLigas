@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.sebastian.propoligas.sportsman.sportsman.models.Persons;
+import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
 
 import java.util.Date;
 
