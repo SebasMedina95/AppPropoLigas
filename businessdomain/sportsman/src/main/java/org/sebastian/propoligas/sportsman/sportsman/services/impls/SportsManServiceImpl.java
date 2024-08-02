@@ -119,8 +119,6 @@ public class SportsManServiceImpl implements SportsManService {
 
     }
 
-    //? Este método lo planteamos así porque vamos a presentar en paralelo información de otro MS combinado.
-    //? La idea es mostrar al deportista con la información de la persona relacionada.
     @Override
     @Transactional(readOnly = true)
     public Page<SportsManEntity> findAll(String search, Pageable pageable) {
