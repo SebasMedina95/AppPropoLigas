@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PersonRepository extends JpaRepository<PersonEntity, Long>, JpaSpecificationExecutor<PersonEntity> {
@@ -18,5 +19,24 @@ public interface PersonRepository extends JpaRepository<PersonEntity, Long>, Jpa
             @Param("personEmail") String personEmail,
             @Param("personDocument") String personDocument,
             @Param("id") Long id);
+
+    @Query("SELECT p.id FROM PersonEntity p " +
+            "WHERE " +
+            "(UPPER(p.documentType) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.documentNumber) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.firstName) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.secondName) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.firstSurname) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.secondSurname) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.email) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.gender) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.phone1) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.phone2) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.address) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.contactPerson) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.phoneContactPerson) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.description) LIKE UPPER(CONCAT('%', :search, '%')) OR " +
+            "UPPER(p.civilStatus) LIKE UPPER(CONCAT('%', :search, '%')))")
+    List<Long> findIdsByCriteria(@Param("search") String search);
 
 }

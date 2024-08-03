@@ -128,7 +128,7 @@ public class SportsManController {
         return ResponseEntity.ok(new ApiResponse<>(
                 pagedModel,
                 new ApiResponse.Meta(
-                        "Listado de comodidades.",
+                        "Listado de deportistas.",
                         HttpStatus.OK.value(),
                         LocalDateTime.now()
                 )

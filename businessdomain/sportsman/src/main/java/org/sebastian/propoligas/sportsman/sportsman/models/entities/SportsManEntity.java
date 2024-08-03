@@ -23,6 +23,10 @@ public class SportsManEntity {
     @Comment("Clave primaria")
     private Long id;
 
+    @Column(name = "PERSON_ID", unique = true, nullable = false )
+    @Comment("ID Referencia de la Persona (MS Persons)")
+    private Long personId;
+
     @Column(name = "CARNET", unique = true, nullable = false, length = 25 )
     @Comment("Número Carnet del deportista")
     private String carnet;
@@ -30,6 +34,10 @@ public class SportsManEntity {
     @Column(name = "SHIRT_NUMBER", nullable = false, length = 3 )
     @Comment("Número Camisa del deportista")
     private String numberShirt;
+
+    @Column(name = "SHIRT_NAME", unique = true, nullable = false, length = 30 )
+    @Comment("Nombre Camisa del deportista")
+    private String nameShirt;
 
     @Column(name = "WEIGHT", nullable = false )
     @Comment("Peso del deportista")
@@ -78,11 +86,6 @@ public class SportsManEntity {
     @Column(name = "DATE_UPDATED", nullable = true )
     @Comment("Fecha actualización del deportista")
     private Date dateUpdated;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "PERSON_ID")
-    @Comment("Persona Asociada - En relación a MS de Persons")
-    private PersonsSportsManRelation personsSportsManRelation;
 
     @Transient //No hace parte directa,no mapeado a la persistencia.
     private Persons person;

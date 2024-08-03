@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -217,6 +218,12 @@ public class PersonServiceImpl implements PersonService {
         }
 
     }
+
+    @Override
+    public List<Long> findPersonIdsByCriteria(String search) {
+        return personRepository.findIdsByCriteria(search);
+    }
+
 
     //* Para el buscador de personas.
     //? Buscarémos tanto por name como por description.

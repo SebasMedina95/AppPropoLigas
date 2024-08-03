@@ -27,6 +27,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/persons")
@@ -329,5 +330,26 @@ public class PersonController {
                 ));
 
     }
+
+    @GetMapping("/find-by-search")
+    public ResponseEntity<ApiResponse<List<Long>>> findPersonIdsByCriteria(
+            @RequestParam("search") String search
+    ) {
+
+        List<Long> personIds = personService.findPersonIdsByCriteria(search);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ApiResponse<>(
+                        personIds,
+                        new ApiResponse.Meta(
+                                "Ids detectados para filtrado.",
+                                HttpStatus.OK.value(),
+                                LocalDateTime.now()
+                        )
+                ));
+
+    }
+
+
 
 }

@@ -7,6 +7,8 @@ import org.sebastian.propoligas.persons.persons.entities.dtos.update.UpdatePerso
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface PersonService {
 
     ResponseWrapper<PersonEntity> create(CreatePersonDto person);
@@ -14,5 +16,6 @@ public interface PersonService {
     ResponseWrapper<PersonEntity> findById(Long id);
     ResponseWrapper<PersonEntity> update(Long id, UpdatePersonDto person);
     ResponseWrapper<PersonEntity> delete(Long id);
+    List<Long> findPersonIdsByCriteria(String search);
 
 }
