@@ -1,7 +1,6 @@
 package org.sebastian.propoligas.sportsman.sportsman.services.impls;
 
 import feign.FeignException;
-import jakarta.persistence.criteria.Predicate;
 import org.sebastian.propoligas.sportsman.sportsman.clients.PersonClientRest;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,35 +110,39 @@ public class SportsManServiceImpl implements SportsManService {
 
         logger.info("Obtener todos los deportistas paginados y con filtro");
 
-        // Sí hay un criterio de búsqueda, buscar primero en el servicio de persons
-        List<Long> personIds = Collections.emptyList();
+        // Si tenemos criterio de búsqueda entonces hacemos validaciones
+        Page<SportsManEntity> sportsManPage;
+        List<Long> personIds;
         if (search != null && !search.isEmpty()) {
+
+            // Buscamos primero en el MS de personas para traer la información que coincida con el criterio
             ApiResponse<List<Long>> personIdsResponse = personClientRest.findPersonIdsByCriteria(search);
             personIds = personIdsResponse.getData();
-            logger.info("IDs de personas obtenidos: {}", personIds);
+
+            // Ahora realizamos la búsqueda en este MS tanto con los ID hallados desde MS de Personas como
+            // con la posibilidad de que también haya un criterio adicional de coincidencia acá.
+            sportsManPage = sportsManRepository.findFilteredSportsMen(search, personIds, pageable);
+
+        }else{
+
+            // Si llegamos a este punto paginamos normal sin el buscador.
+            sportsManPage = sportsManRepository.findNoFilteredSportsMen(pageable);
+
         }
 
-//        Specification<SportsManEntity> spec = this.searchByFilter(search, personIds);
-//        Page<SportsManEntity> sportsManPage = sportsManServiceRepository.findAll(spec, pageable);
+        // Ajustamos los elementos hallados en el content para que aparezcan junto con la información
+        // que viene desde el MS de personas.
+        List<SportsManEntity> sportsManDtos = sportsManPage.getContent().stream()
+                .map(sportsMan -> {
+                    Long personId = sportsMan.getPersonId();
+                    Persons person = getPersonOfMsPersons(personId);
+                    sportsMan.setPerson(person);
+                    return sportsMan;
+                })
+                .toList();
 
-        // Filtrar los resultados adicionales por personIds si existen
-//        List<SportsManEntity> filteredSportsMen = new ArrayList<>(sportsManPage.getContent());
-//        if (!personIds.isEmpty()) {
-//            List<SportsManEntity> sportsMenByPersonIds = sportsManServiceRepository.findByPersonIds(personIds);
-//            filteredSportsMen.retainAll(sportsMenByPersonIds);
-//        }
-
-        // Convertir a DTOs si es necesario
-//        List<SportsManEntity> sportsManDtos = filteredSportsMen.stream()
-//                .map(sportsMan -> {
-//                    Long personId = sportsMan.getPersonsSportsManRelation().getPersonId();
-//                    Persons person = getPersonOfMsPersons(personId);
-//                    sportsMan.setPerson(person);
-//                    return sportsMan;
-//                }).toList();
-
-//        return new PageImpl<>(sportsManDtos, pageable, sportsManPage.getTotalElements());
-        return null;
+        // Retornamos los elementos con la paginación y filtro aplicado.
+        return new PageImpl<>(sportsManDtos, pageable, sportsManPage.getTotalElements());
 
     }
 
@@ -215,30 +217,6 @@ public class SportsManServiceImpl implements SportsManService {
             return null;
         }
 
-    }
-
-    //* Para el buscador de comodidades.
-    //? Buscarémos tanto por name como por description.
-    //? NOTA: No olvidar el status.
-    public Specification<SportsManEntity> searchByFilter(String search, List<Long> personIds) {
-        return (root, query, criteriaBuilder) -> {
-
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.isTrue(root.get("status")));
-
-            if (search != null && !search.isEmpty()) {
-                String searchPatternWithUpper = "%" + search.toUpperCase() + "%";
-
-                predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.upper(root.get("carnet")), searchPatternWithUpper),
-                        criteriaBuilder.like(criteriaBuilder.upper(root.get("numberShirt")), searchPatternWithUpper),
-                        criteriaBuilder.like(criteriaBuilder.upper(root.get("startingPlayingPosition")), searchPatternWithUpper),
-                        criteriaBuilder.like(criteriaBuilder.upper(root.get("description")), searchPatternWithUpper)
-                ));
-            }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
     }
 
 }
