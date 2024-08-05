@@ -158,8 +158,9 @@ public class SportsManServiceImpl implements SportsManService {
                 SportsManEntity sportMan = sportsManOptional.orElseThrow();
                 logger.info("Deportista obtenido por su ID");
 
-//                Persons getPersonMS = this.getPersonOfMsPersons(sportMan.getPersonsSportsManRelation().getPersonId());
-//                sportMan.setPerson(getPersonMS);
+                Long personIdMs = sportMan.getPersonId();
+                Persons personData = this.getPersonOfMsPersons(personIdMs);
+                sportMan.setPerson(personData);
 
                 return new ResponseWrapper<>(sportMan, "Deportista encontrado por ID correctamente");
 
