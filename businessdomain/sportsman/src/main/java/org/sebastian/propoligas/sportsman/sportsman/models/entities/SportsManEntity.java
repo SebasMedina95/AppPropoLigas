@@ -59,10 +59,6 @@ public class SportsManEntity {
     @Comment("¿Capitan de campo?")
     private Boolean captain;
 
-    @Column(name = "PHOTO", nullable = true, length = 500)
-    @Comment("Fotografía Carnet del deportista")
-    private String photoUrl;
-
     @Column(name = "DESCRIPTION", nullable = true, length = 3000)
     @Comment("Anotaciones Adicionales del deportista")
     private String description;

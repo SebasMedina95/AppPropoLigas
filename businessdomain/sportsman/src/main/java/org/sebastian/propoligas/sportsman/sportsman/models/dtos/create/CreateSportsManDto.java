@@ -15,9 +15,16 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CreateSportsManDto {
 
+    @NotNull(message = "El id de referencia de la persona no puede ir vacío")
+    private Long personId;
+
     @NotEmpty(message = "El número de camisa del deportista es requerido")
     @Size(min = 1, max = 3, message = "El número de camisa debe ser mínimo de 1 caracteres y máximo de 3")
     private String numberShirt;
+
+    @NotEmpty(message = "El nombre de camisa del deportista es requerido")
+    @Size(min = 1, max = 30, message = "El nombre de camisa debe ser mínimo de 1 caracteres y máximo de 30")
+    private String nameShirt;
 
     @NotNull(message = "El peso del deportista no puede ir vacío")
     @Min(value = 1, message = "El peso del deportista debe ser al menos 1")
@@ -40,9 +47,5 @@ public class CreateSportsManDto {
 
     private String photoUrl;
     private String description;
-
-    @NotNull(message = "El identificador de persona es requerido")
-    @Min(value = 1, message = "El identificador debe ser mayor o igual a 1")
-    private Long personsSportsManRelationId;
 
 }

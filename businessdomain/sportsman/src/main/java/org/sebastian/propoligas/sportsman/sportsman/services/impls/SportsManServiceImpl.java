@@ -8,7 +8,7 @@ import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper
 import org.sebastian.propoligas.sportsman.sportsman.models.Persons;
 import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
-import org.sebastian.propoligas.sportsman.sportsman.repositories.SportsManServiceRepository;
+import org.sebastian.propoligas.sportsman.sportsman.repositories.SportsManRepository;
 import org.sebastian.propoligas.sportsman.sportsman.services.SportsManService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +30,15 @@ public class SportsManServiceImpl implements SportsManService {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final Logger logger = LoggerFactory.getLogger(SportsManServiceImpl.class);
 
-    private final SportsManServiceRepository sportsManServiceRepository;
+    private final SportsManRepository sportsManRepository;
     private final PersonClientRest personClientRest;
 
     @Autowired
     public SportsManServiceImpl(
-            SportsManServiceRepository sportsManServiceRepository,
+            SportsManRepository sportsManRepository,
             PersonClientRest personClientRest
     ){
-        this.sportsManServiceRepository = sportsManServiceRepository;
+        this.sportsManRepository = sportsManRepository;
         this.personClientRest = personClientRest;
     }
 
@@ -48,7 +48,7 @@ public class SportsManServiceImpl implements SportsManService {
 
         logger.info("Iniciando guardado de deportista");
         Persons personData;
-        Long personIdMs = sportsMan.getPersonsSportsManRelationId();
+        Long personIdMs = sportsMan.getPersonId();
         try{
 
             personData = this.getPersonOfMsPersons(personIdMs);
@@ -67,39 +67,30 @@ public class SportsManServiceImpl implements SportsManService {
         }
 
         //? Debemos revisar que el deportista no se halle registrado a nivel de persona, no puede estar más de una vez.
-//        Optional<PersonsSportsManRelation> optionalGetRelationalPerson =
-//                personsSportsManRelationRepository.getRelationalPerson(personIdMs);
+        Optional<SportsManEntity> optionalSportManByPersonId =
+                sportsManRepository.getSportManByPersonId(personIdMs);
 
-//        if(optionalGetRelationalPerson.isPresent()){
-//            logger.error("La persona ya se encuentra registrada a nivel de deportista");
-//            return new ResponseWrapper<>(
-//                    null, "La persona ya se encuentra asociada como deportista");
-//        }
+        if(optionalSportManByPersonId.isPresent()){
+            logger.error("La persona ya se encuentra registrada a nivel de deportista");
+            return new ResponseWrapper<>(
+                    null, "La persona ya se encuentra asociada como deportista");
+        }
 
         //? Generemos el carnet (Combinación de documento con 4 dígitos aleatorios)
         String generateCarnet = "CT-" + personData.getDocumentNumber() + "-" + this.generateRandomString();
 
-        //? ******************************
-        //? Pendiente el tema de la imagen
-        //? ******************************
-
-        //? Guardamos primero la relación
-//        PersonsSportsManRelation newPersonsSportsManRelation = new PersonsSportsManRelation();
-//        newPersonsSportsManRelation.setPersonId(personData.getId());
-//        PersonsSportsManRelation relationPerson =
-//                personsSportsManRelationRepository.save(newPersonsSportsManRelation);
-
+        //? Guardamos
         SportsManEntity newSportMan = new SportsManEntity();
+        newSportMan.setPersonId(sportsMan.getPersonId());
         newSportMan.setCarnet(generateCarnet);
         newSportMan.setNumberShirt(sportsMan.getNumberShirt());
+        newSportMan.setNameShirt(sportsMan.getNameShirt());
         newSportMan.setWeight(sportsMan.getWeight());
         newSportMan.setHeight(sportsMan.getHeight());
         newSportMan.setBloodType(sportsMan.getBloodType());
         newSportMan.setStartingPlayingPosition(sportsMan.getStartingPlayingPosition());
         newSportMan.setCaptain(sportsMan.getCaptain());
-        newSportMan.setPhotoUrl("default.png");
         newSportMan.setDescription(sportsMan.getDescription());
-//        newSportMan.setPersonsSportsManRelation(relationPerson);
         newSportMan.setStatus(true); //* Por defecto entra en true
         newSportMan.setUserCreated(dummiesUser); //! Ajustar cuando se implemente Security
         newSportMan.setDateCreated(new Date()); //! Ajustar cuando se implemente Security
@@ -109,7 +100,7 @@ public class SportsManServiceImpl implements SportsManService {
         //? Guardamos y devolvemos al deportista
         logger.info("Deportista guardado correctamente");
         return new ResponseWrapper<>(
-                sportsManServiceRepository.save(newSportMan),
+                sportsManRepository.save(newSportMan),
                 "El deportista fue creado correctamente"
         );
 
@@ -129,26 +120,27 @@ public class SportsManServiceImpl implements SportsManService {
             logger.info("IDs de personas obtenidos: {}", personIds);
         }
 
-        Specification<SportsManEntity> spec = this.searchByFilter(search, personIds);
-        Page<SportsManEntity> sportsManPage = sportsManServiceRepository.findAll(spec, pageable);
+//        Specification<SportsManEntity> spec = this.searchByFilter(search, personIds);
+//        Page<SportsManEntity> sportsManPage = sportsManServiceRepository.findAll(spec, pageable);
 
         // Filtrar los resultados adicionales por personIds si existen
-        List<SportsManEntity> filteredSportsMen = new ArrayList<>(sportsManPage.getContent());
-        if (!personIds.isEmpty()) {
-            List<SportsManEntity> sportsMenByPersonIds = sportsManServiceRepository.findByPersonIds(personIds);
-            filteredSportsMen.retainAll(sportsMenByPersonIds);
-        }
+//        List<SportsManEntity> filteredSportsMen = new ArrayList<>(sportsManPage.getContent());
+//        if (!personIds.isEmpty()) {
+//            List<SportsManEntity> sportsMenByPersonIds = sportsManServiceRepository.findByPersonIds(personIds);
+//            filteredSportsMen.retainAll(sportsMenByPersonIds);
+//        }
 
         // Convertir a DTOs si es necesario
-        List<SportsManEntity> sportsManDtos = filteredSportsMen.stream()
-                .map(sportsMan -> {
+//        List<SportsManEntity> sportsManDtos = filteredSportsMen.stream()
+//                .map(sportsMan -> {
 //                    Long personId = sportsMan.getPersonsSportsManRelation().getPersonId();
 //                    Persons person = getPersonOfMsPersons(personId);
 //                    sportsMan.setPerson(person);
-                    return sportsMan;
-                }).toList();
+//                    return sportsMan;
+//                }).toList();
 
-        return new PageImpl<>(sportsManDtos, pageable, sportsManPage.getTotalElements());
+//        return new PageImpl<>(sportsManDtos, pageable, sportsManPage.getTotalElements());
+        return null;
 
     }
 
@@ -160,7 +152,7 @@ public class SportsManServiceImpl implements SportsManService {
 
         try{
 
-            Optional<SportsManEntity> sportsManOptional = sportsManServiceRepository.findById(id);
+            Optional<SportsManEntity> sportsManOptional = sportsManRepository.findById(id);
 
             if( sportsManOptional.isPresent() ){
                 SportsManEntity sportMan = sportsManOptional.orElseThrow();
