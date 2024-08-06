@@ -2,16 +2,20 @@
 
 Esta aplicación es el desarrollo de un sistema de administración de torneos
 de futbol para una gran municipalidad de un lugar en específico, el objetivo
-será construir esta aplicación _BACKEND_ en una arquitectura de micro servicios,
-generando una aplicación más mantenible, hasta el momento no se ha
-definido de cuantos micro servicios tendrémos. Efectivamente, la aplicación está
+será construir esta aplicación _BACKEND_ en una arquitectura de micro servicios 
+(aplicación API RESTFul), generando una aplicación más mantenible; hasta el momento 
+no se ha definido de cuantos micro servicios tendrémos, pero se lista al final de
+este enunciado los MS tentativos para la aplicación. Efectivamente, la aplicación está
 desarrollada en Spring Boot versión 3.3.2 y estamos manejando diferentes bases
-de datos Postgres para cada BD que tendrá cada micro servicio. Para la comunicación
-entre los micros estaremos usando Feign así como ORM base será JPA e Hibernate.
+de datos Postgres para cada MS (cada MS tendrá su BD independiente). Para la comunicación
+entre los micros estaremos usando Feign así como ORM base será JPA e Hibernate para el
+tema de las consultas SQL, las entidades estarán manejadas por Lombok y tendremos adecuado
+en cada uno de los controladores la respectiva documentación Swagger.
+
 Las diferentes bases de datos están manejadas con contenedores de Docker para tener
 mejor independizadas las tareas así como mantenibilidad de la aplicación.
 
-* MÓDULOS (MICROS) TENTATIVOS:
+* _MÓDULOS (MICROS) TENTATIVOS:_
   * Personas
   * Deportistas
   * Torneos
