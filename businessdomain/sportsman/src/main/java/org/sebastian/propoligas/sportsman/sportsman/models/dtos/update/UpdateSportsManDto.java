@@ -1,4 +1,4 @@
-package org.sebastian.propoligas.sportsman.sportsman.models.dtos.create;
+package org.sebastian.propoligas.sportsman.sportsman.models.dtos.update;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreateSportsManDto {
+public class UpdateSportsManDto {
 
     @NotNull(message = "El id de referencia de la persona no puede ir vacío")
     private Long personId;

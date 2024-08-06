@@ -9,6 +9,7 @@ import org.sebastian.propoligas.sportsman.sportsman.common.utils.CustomPagedReso
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ErrorsValidationsResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
+import org.sebastian.propoligas.sportsman.sportsman.models.dtos.update.UpdateSportsManDto;
 import org.sebastian.propoligas.sportsman.sportsman.models.entities.SportsManEntity;
 import org.sebastian.propoligas.sportsman.sportsman.services.SportsManService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,7 @@ public class SportsManController {
     }
 
     @GetMapping("/find-all")
-    @Operation(summary = "Obtener todos los deportistas", description = "Obtener todos los deportistas con paginación y también aplicando filtros")
+    @Operation(summary = "Obtener todos los deportistas", description = "Obtener todos los deportistas con paginación y también aplicando filtros (Filtro dinámico con entidad principal de SportsMan y con Persons de MS Externo)")
     public ResponseEntity<ApiResponse<Object>> findAll(
             @Valid
             @RequestBody PaginationDto paginationDto,
@@ -177,6 +178,117 @@ public class SportsManController {
                         null,
                         new ApiResponse.Meta(
                                 comfort.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
+                                LocalDateTime.now()
+                        )
+                ));
+
+    }
+
+    @PutMapping("update-by-id/{id}")
+    @Operation(summary = "Actualizar un deportista", description = "Actualizar un deportista dado el ID")
+    public ResponseEntity<ApiResponse<Object>> update(
+            @Valid
+            @RequestBody UpdateSportsManDto sportsManRequest,
+            BindingResult result,
+            @PathVariable("id") String id
+    ){
+
+        if(result.hasFieldErrors()){
+            ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            errors.validation(result),
+                            new ApiResponse.Meta(
+                                    "Errores en los campos de actualización",
+                                    HttpStatus.BAD_REQUEST.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        ResponseWrapper<SportsManEntity> sportsManEntityUpdate;
+
+        //Validamos que el ID de la URL sea válido
+        try {
+            Long sportsManId = Long.parseLong(id);
+            sportsManEntityUpdate = sportsManService.update(sportsManId, sportsManRequest);
+        }catch (NumberFormatException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El ID proporcionado es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        if( sportsManEntityUpdate.getData() != null ){
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            sportsManEntityUpdate.getData(),
+                            new ApiResponse.Meta(
+                                    "Deportista Actualizado Correctamente.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        null,
+                        new ApiResponse.Meta(
+                                sportsManEntityUpdate.getErrorMessage(),
+                                HttpStatus.BAD_REQUEST.value(),
+                                LocalDateTime.now()
+                        )
+                ));
+
+    }
+
+    @DeleteMapping("/delete-by-id/{id}")
+    @Operation(summary = "Eliminar un deportista", description = "Eliminar un deportista pero de manera lógica")
+    public ResponseEntity<ApiResponse<SportsManEntity>> delete(
+            @PathVariable("id") String id
+    ){
+
+        ResponseWrapper<SportsManEntity> sportsManUpdate;
+
+        try {
+            Long sportManId = Long.parseLong(id);
+            sportsManUpdate = sportsManService.delete(sportManId);
+        }catch (NumberFormatException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            null,
+                            new ApiResponse.Meta(
+                                    "El ID proporcionado es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        if( sportsManUpdate.getData() != null ){
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            sportsManUpdate.getData(),
+                            new ApiResponse.Meta(
+                                    "Deportista Eliminado Correctamente.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(
+                        null,
+                        new ApiResponse.Meta(
+                                sportsManUpdate.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
                         )

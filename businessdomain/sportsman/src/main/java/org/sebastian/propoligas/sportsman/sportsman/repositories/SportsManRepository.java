@@ -13,12 +13,14 @@ import java.util.Optional;
 
 public interface SportsManRepository extends JpaRepository<SportsManEntity, Long>, JpaSpecificationExecutor<SportsManEntity> {
 
-    @Query("SELECT sm FROM SportsManEntity sm WHERE sm.personId IN (:personIds)")
-    List<SportsManEntity> findByPersonIds(@Param("personIds") List<Long> personIds);
+    @Query("SELECT s FROM SportsManEntity s WHERE s.personId = :personId AND s.id <> :id")
+    Optional<SportsManEntity> getSportsManByPersonForEdit(@Param("personId") Long personId,
+                                                          @Param("id") Long id);
 
     @Query("SELECT sm FROM SportsManEntity sm WHERE sm.personId = :personId")
     Optional<SportsManEntity> getSportManByPersonId(@Param("personId") Long personId);
 
+    //? Filtro especializado para búsqueda cuando tenemos filtro
     @Query("SELECT s FROM SportsManEntity s " +
             "WHERE (:search IS NULL OR :search = '' OR " +
             "LOWER(s.carnet) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
@@ -31,6 +33,7 @@ public interface SportsManRepository extends JpaRepository<SportsManEntity, Long
                                                 @Param("personIds") List<Long> personIds,
                                                 Pageable pageable);
 
+    //? Filtro especializado para búsqueda cuando no tenemos filtro
     @Query("SELECT s FROM SportsManEntity s WHERE s.status = true")
     Page<SportsManEntity> findNoFilteredSportsMen(Pageable pageable);
 
