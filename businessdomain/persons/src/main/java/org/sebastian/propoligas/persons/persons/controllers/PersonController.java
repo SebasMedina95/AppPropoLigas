@@ -2,10 +2,16 @@ package org.sebastian.propoligas.persons.persons.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.sebastian.propoligas.persons.persons.common.dtos.PaginationDto;
-import org.sebastian.propoligas.persons.persons.common.utils.ApiResponse;
+import org.sebastian.propoligas.persons.persons.common.swagger.*;
+import org.sebastian.propoligas.persons.persons.common.utils.ApiResponseConsolidation;
 import org.sebastian.propoligas.persons.persons.common.utils.CustomPagedResourcesAssembler;
 import org.sebastian.propoligas.persons.persons.common.utils.ErrorsValidationsResponse;
 import org.sebastian.propoligas.persons.persons.common.utils.ResponseWrapper;
@@ -47,7 +53,19 @@ public class PersonController {
 
     @PostMapping("/create")
     @Operation(summary = "Crear una Persona", description = "Creación de una persona")
-    public ResponseEntity<ApiResponse<Object>> create(
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Persona Registrada Correctamente.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreate.class))),
+            @ApiResponse(responseCode = "406", description = "Errores en los campos de creación.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreateErrorFields.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo: " +
+                    "El número de documento proporcionado es inválido.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<Object>> create(
             @Valid
             @RequestBody CreatePersonDto personRequest,
             BindingResult result
@@ -56,10 +74,10 @@ public class PersonController {
         //Validación de campos
         if(result.hasFieldErrors()){
             ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                    .body(new ApiResponseConsolidation<>(
                             errors.validation(result),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Errores en los campos de creación",
                                     HttpStatus.BAD_REQUEST.value(),
                                     LocalDateTime.now()
@@ -72,9 +90,9 @@ public class PersonController {
             Long.parseLong(personRequest.getDocumentNumber());
         }catch (Exception ex){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El número de documento proporcionado es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -88,9 +106,9 @@ public class PersonController {
         //? Si no ocurre algún error, entonces registramos :)
         if( personNew.getData() != null ){
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             personNew.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Persona Registrada Correctamente.",
                                     HttpStatus.CREATED.value(),
                                     LocalDateTime.now()
@@ -100,9 +118,9 @@ public class PersonController {
 
         //? Estamos en este punto, el registro no fue correcto
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 personNew.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -111,11 +129,28 @@ public class PersonController {
 
     }
 
-    @GetMapping("/find-all")
-    @Operation(summary = "Obtener todas las personas", description = "Obtener todas las personas con paginación y también aplicando filtros")
-    public ResponseEntity<ApiResponse<Object>> findAll(
-            @Valid
-            @RequestBody PaginationDto paginationDto,
+    @PostMapping("/find-all")
+    @Operation(
+            summary = "Obtener todas las personas",
+            description = "Obtener todas las personas con paginación y también aplicando filtros",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos para la paginación y búsqueda",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginationDto.class)
+                    )
+            )
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Listado de personas.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseList.class))),
+            @ApiResponse(responseCode = "400", description = "Errores en los campos de paginación.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseListError.class)))
+    })
+    public ResponseEntity<ApiResponseConsolidation<Object>> findAll(
+            @Valid @RequestBody PaginationDto paginationDto,
             BindingResult result
     ){
 
@@ -123,9 +158,9 @@ public class PersonController {
         if(result.hasFieldErrors()){
             ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             errors.validation(result),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Errores en los campos de paginación",
                                     HttpStatus.BAD_REQUEST.value(),
                                     LocalDateTime.now()
@@ -142,9 +177,9 @@ public class PersonController {
 
         PagedModel<PersonEntity> pagedModel = customPagedResourcesAssembler.toModel(comforts, uriBuilder);
 
-        return ResponseEntity.ok(new ApiResponse<>(
+        return ResponseEntity.ok(new ApiResponseConsolidation<>(
                 pagedModel,
-                new ApiResponse.Meta(
+                new ApiResponseConsolidation.Meta(
                         "Listado de personas.",
                         HttpStatus.OK.value(),
                         LocalDateTime.now()
@@ -158,10 +193,21 @@ public class PersonController {
             summary = "Obtener persona por ID",
             description = "Obtener una persona dado el ID",
             parameters = {
-                    @Parameter(name = "id", description = "ID de la persona a obtener", required = true)
+                    @Parameter(name = "id", description = "ID de la persona a obtener", required = true, in = ParameterIn.PATH)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Persona encontrada.",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = PersonResponseCreate.class))),
+                    @ApiResponse(responseCode = "404", description = "Persona no encontrada",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = PersonResponseCreateErrorGeneric.class))),
+                    @ApiResponse(responseCode = "400", description = "Error al realizar la búsqueda",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = PersonResponseCreateErrorGeneric.class)))
             }
     )
-    public ResponseEntity<ApiResponse<PersonEntity>> findById(
+    public ResponseEntity<ApiResponseConsolidation<PersonEntity>> findById(
             @PathVariable("id") String id
     ){
 
@@ -173,9 +219,9 @@ public class PersonController {
             personGet = personService.findById(personId);
         }catch (NumberFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El ID proporcionado para obtener una persona es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -185,9 +231,9 @@ public class PersonController {
 
         if( personGet.getData() != null ){
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             personGet.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Persona obtenida por ID.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -195,10 +241,10 @@ public class PersonController {
                     ));
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 personGet.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -215,7 +261,19 @@ public class PersonController {
                     @Parameter(name = "id", description = "ID para la actualización", required = true)
             }
     )
-    public ResponseEntity<ApiResponse<Object>> update(
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Persona Actualizada Correctamente.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreate.class))),
+            @ApiResponse(responseCode = "406", description = "Errores en los campos de creación.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreateErrorFields.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo: " +
+                    "El número de documento proporcionado es inválido. El ID proporcionado para actualizar es inválido.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<Object>> update(
             @Valid
             @RequestBody UpdatePersonDto personRequest,
             BindingResult result,
@@ -230,10 +288,25 @@ public class PersonController {
             personUpdate = personService.update(personId, personRequest);
         }catch (NumberFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El ID proporcionado para actualizar es inválido.",
+                                    HttpStatus.OK.value(),
+                                    LocalDateTime.now()
+                            )
+                    ));
+        }
+
+        //Validación de número de documento
+        try{
+            Long.parseLong(personRequest.getDocumentNumber());
+        }catch (Exception ex){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseConsolidation<>(
+                            null,
+                            new ApiResponseConsolidation.Meta(
+                                    "El número de documento proporcionado es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
                             )
@@ -243,10 +316,10 @@ public class PersonController {
         //Validación de campos
         if(result.hasFieldErrors()){
             ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                    .body(new ApiResponseConsolidation<>(
                             errors.validation(result),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Errores en los campos de actualización",
                                     HttpStatus.BAD_REQUEST.value(),
                                     LocalDateTime.now()
@@ -256,9 +329,9 @@ public class PersonController {
 
         if( personUpdate.getData() != null ){
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             personUpdate.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Persona Actualizada Correctamente.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -267,9 +340,9 @@ public class PersonController {
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 personUpdate.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -280,13 +353,22 @@ public class PersonController {
 
     @DeleteMapping("/delete-by-id/{id}")
     @Operation(
-            summary = "Eliminar una comodidad",
+            summary = "Eliminar una persona",
             description = "Eliminar una persona pero de manera lógica",
             parameters = {
                     @Parameter(name = "id", description = "ID de la persona a eliminar", required = true)
             }
     )
-    public ResponseEntity<ApiResponse<PersonEntity>> delete(
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Persona Eliminada Correctamente.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreate.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo: " +
+                    "El ID proporcionado para actualizar es inválido.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<PersonEntity>> delete(
             @PathVariable("id") String id
     ){
 
@@ -297,9 +379,9 @@ public class PersonController {
             personUpdate = personService.delete(personId);
         }catch (NumberFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El ID proporcionado es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -309,9 +391,9 @@ public class PersonController {
 
         if( personUpdate.getData() != null ){
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             personUpdate.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Persona Eliminada Correctamente.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -320,9 +402,9 @@ public class PersonController {
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 personUpdate.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -332,16 +414,31 @@ public class PersonController {
     }
 
     @GetMapping("/find-by-search")
-    public ResponseEntity<ApiResponse<List<Long>>> findPersonIdsByCriteria(
+    @Operation(
+            summary = "Buscar una persona por criterio",
+            description = "Buscar una persona dado un criterio de búsqueda, usado principalmente desde otros MS",
+            parameters = {
+                    @Parameter(name = "search", description = "Criterio proporcionado para la búsqueda", required = true)
+            }
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Ids detectados para filtrado.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseIdsList.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PersonResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<List<Long>>> findPersonIdsByCriteria(
             @RequestParam("search") String search
     ) {
 
         List<Long> personIds = personService.findPersonIdsByCriteria(search);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         personIds,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 "Ids detectados para filtrado.",
                                 HttpStatus.OK.value(),
                                 LocalDateTime.now()
