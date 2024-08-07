@@ -8,7 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.sebastian.propoligas.sportsman.sportsman.clients.PersonClientRest;
-import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
+import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponseConsolidation;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.sportsman.sportsman.data.SportsManMock;
 import org.sebastian.propoligas.sportsman.sportsman.models.Persons;
@@ -51,7 +51,7 @@ class SportsManTests {
 
         // Configurar comportamiento de los mocks
         // Generamos un ApiResponse extra para generar la estructura de salida de la petición Feign
-        ApiResponse<Persons> apiResponse = new ApiResponse<>(personData, null);
+        ApiResponseConsolidation<Persons> apiResponse = new ApiResponseConsolidation<>(personData, null);
         when(personClientRest.getPerson(sportsManDto.getPersonId())).thenReturn(apiResponse);
         when(sportsManRepository.getSportManByPersonId(sportsManDto.getPersonId())).thenReturn(Optional.empty());
         when(sportsManRepository.save(any(SportsManEntity.class))).thenReturn(sportsManEntity);
@@ -70,7 +70,7 @@ class SportsManTests {
     void testCreateSportsManPersonNotFound() {
 
         CreateSportsManDto createSportsManDto = SportsManMock.createSportsManDto();
-        when(personClientRest.getPerson(anyLong())).thenReturn(new ApiResponse<>(null, null));
+        when(personClientRest.getPerson(anyLong())).thenReturn(new ApiResponseConsolidation<>(null, null));
 
         // Llamar al método que se está probando
         ResponseWrapper<SportsManEntity> response = sportsManService.create(createSportsManDto);
@@ -91,7 +91,7 @@ class SportsManTests {
         Persons personDto = SportsManMock.createPersonDto();
 
         // Configurar comportamiento de los mocks
-        when(personClientRest.getPerson(anyLong())).thenReturn(new ApiResponse<>(personDto, null));
+        when(personClientRest.getPerson(anyLong())).thenReturn(new ApiResponseConsolidation<>(personDto, null));
         when(sportsManRepository.getSportManByPersonId(anyLong())).thenReturn(Optional.of(sportsManEntity));
 
         // Llamar al método que se está probando
@@ -110,7 +110,7 @@ class SportsManTests {
         String searchCriteria = "John";
         Pageable pageable = PageRequest.of(0, 10);
         List<Long> personIds = List.of(12345L, 67890L);
-        ApiResponse<List<Long>> personIdsResponse = new ApiResponse<>(personIds, null);
+        ApiResponseConsolidation<List<Long>> personIdsResponse = new ApiResponseConsolidation<>(personIds, null);
         List<SportsManEntity> sportsManEntities = SportsManMock.createSportsManEntities(); // Crear una lista de entidades
         Page<SportsManEntity> sportsManPage = new PageImpl<>(sportsManEntities, pageable, sportsManEntities.size());
 
@@ -119,7 +119,7 @@ class SportsManTests {
         when(sportsManRepository.findFilteredSportsMen(searchCriteria, personIds, pageable)).thenReturn(sportsManPage);
         when(personClientRest.getPerson(anyLong())).thenAnswer(invocation -> {
             Long personId = invocation.getArgument(0);
-            return new ApiResponse<>(SportsManMock.createPersonDto(personId), null);
+            return new ApiResponseConsolidation<>(SportsManMock.createPersonDto(personId), null);
         });
 
         // Llamar al método que se está probando
@@ -145,7 +145,7 @@ class SportsManTests {
         when(sportsManRepository.findNoFilteredSportsMen(pageable)).thenReturn(sportsManPage);
         when(personClientRest.getPerson(anyLong())).thenAnswer(invocation -> {
             Long personId = invocation.getArgument(0);
-            return new ApiResponse<>(SportsManMock.createPersonDto(personId), null);
+            return new ApiResponseConsolidation<>(SportsManMock.createPersonDto(personId), null);
         });
 
         // Llamar al método que se está probando
@@ -182,7 +182,7 @@ class SportsManTests {
         String searchCriteria = "NonExisting";
         Pageable pageable = PageRequest.of(0, 10);
         List<Long> personIds = List.of();
-        ApiResponse<List<Long>> personIdsResponse = new ApiResponse<>(personIds, null);
+        ApiResponseConsolidation<List<Long>> personIdsResponse = new ApiResponseConsolidation<>(personIds, null);
         Page<SportsManEntity> sportsManPage = new PageImpl<>(new ArrayList<>(), pageable, 0);
 
         // Configurar comportamiento de los mocks
@@ -211,7 +211,7 @@ class SportsManTests {
         // Configurar comportamiento de los mocks
         Persons mockPerson = SportsManMock.createPersonDto(mockSportsMan.getPersonId());
         when(sportsManRepository.findById(sportsManId)).thenReturn(Optional.of(mockSportsMan));
-        when(personClientRest.getPerson(mockSportsMan.getPersonId())).thenReturn(new ApiResponse<>(mockPerson, null));
+        when(personClientRest.getPerson(mockSportsMan.getPersonId())).thenReturn(new ApiResponseConsolidation<>(mockPerson, null));
 
         // Llamar al método que se está probando
         ResponseWrapper<SportsManEntity> response = sportsManService.findById(sportsManId);
@@ -234,7 +234,7 @@ class SportsManTests {
 
         // Configurar comportamiento de los mocks
         when(sportsManRepository.findById(sportsManId)).thenReturn(Optional.of(mockSportsMan));
-        when(personClientRest.getPerson(mockSportsMan.getPersonId())).thenReturn(new ApiResponse<>(null, null));
+        when(personClientRest.getPerson(mockSportsMan.getPersonId())).thenReturn(new ApiResponseConsolidation<>(null, null));
 
         // Llamar al método que se está probando
         ResponseWrapper<SportsManEntity> response = sportsManService.findById(sportsManId);
@@ -292,7 +292,7 @@ class SportsManTests {
         // Configurar comportamiento de los mocks
         Persons mockPerson = SportsManMock.createPersonDto(updateSportsManDto.getPersonId());
         when(sportsManRepository.findById(sportsManId)).thenReturn(Optional.of(existingSportsMan));
-        when(personClientRest.getPerson(updateSportsManDto.getPersonId())).thenReturn(new ApiResponse<>(mockPerson, null));
+        when(personClientRest.getPerson(updateSportsManDto.getPersonId())).thenReturn(new ApiResponseConsolidation<>(mockPerson, null));
         when(sportsManRepository.getSportsManByPersonForEdit(updateSportsManDto.getPersonId(), sportsManId)).thenReturn(Optional.empty());
         when(sportsManRepository.save(any(SportsManEntity.class))).thenReturn(existingSportsMan);
 
@@ -320,7 +320,7 @@ class SportsManTests {
 
         // Configurar comportamiento de los mocks
         when(sportsManRepository.findById(sportsManId)).thenReturn(Optional.of(existingSportsMan));
-        when(personClientRest.getPerson(updateSportsManDto.getPersonId())).thenReturn(new ApiResponse<>(null, null));
+        when(personClientRest.getPerson(updateSportsManDto.getPersonId())).thenReturn(new ApiResponseConsolidation<>(null, null));
 
         // Llamar al método que se está probando
         ResponseWrapper<SportsManEntity> response = sportsManService.update(sportsManId, updateSportsManDto);
@@ -343,7 +343,7 @@ class SportsManTests {
         // Configurar comportamiento de los mocks
         Persons mockPerson = SportsManMock.createPersonDto(updateSportsManDto.getPersonId());
         when(sportsManRepository.findById(sportsManId)).thenReturn(Optional.of(existingSportsMan));
-        when(personClientRest.getPerson(updateSportsManDto.getPersonId())).thenReturn(new ApiResponse<>(mockPerson, null));
+        when(personClientRest.getPerson(updateSportsManDto.getPersonId())).thenReturn(new ApiResponseConsolidation<>(mockPerson, null));
         when(sportsManRepository.getSportsManByPersonForEdit(updateSportsManDto.getPersonId(), sportsManId)).thenReturn(Optional.of(existingSportsMan));
 
         // Llamar al método que se está probando

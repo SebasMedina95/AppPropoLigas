@@ -2,7 +2,7 @@ package org.sebastian.propoligas.sportsman.sportsman.services.impls;
 
 import feign.FeignException;
 import org.sebastian.propoligas.sportsman.sportsman.clients.PersonClientRest;
-import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
+import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponseConsolidation;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
 import org.sebastian.propoligas.sportsman.sportsman.models.Persons;
 import org.sebastian.propoligas.sportsman.sportsman.models.dtos.create.CreateSportsManDto;
@@ -119,7 +119,7 @@ public class SportsManServiceImpl implements SportsManService {
 
             // Buscamos primero en el MS de personas para traer la información que coincida con el criterio
             logger.info("Obtener todos los deportistas - Con criterio de búsqueda en MS Persons y SportsMan");
-            ApiResponse<List<Long>> personIdsResponse = personClientRest.findPersonIdsByCriteria(search);
+            ApiResponseConsolidation<List<Long>> personIdsResponse = personClientRest.findPersonIdsByCriteria(search);
             personIds = personIdsResponse.getData();
 
             // Ahora realizamos la búsqueda en este MS tanto con los ID hallados desde MS de Personas como
@@ -317,7 +317,7 @@ public class SportsManServiceImpl implements SportsManService {
 
             //? Ahora hallemos la persona en su MS
             Persons personData;
-            ApiResponse<Persons> personMsvc =
+            ApiResponseConsolidation<Persons> personMsvc =
                     personClientRest.getPerson(personId);
             personData = personMsvc.getData();
 

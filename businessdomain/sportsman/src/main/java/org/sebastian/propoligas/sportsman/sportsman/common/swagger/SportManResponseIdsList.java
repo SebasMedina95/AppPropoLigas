@@ -1,18 +1,19 @@
-package org.sebastian.propoligas.sportsman.sportsman.common.utils;
+package org.sebastian.propoligas.sportsman.sportsman.common.swagger;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiResponse<T> {
+public class SportManResponseIdsList {
 
-    private T data;
-    private Meta meta;
+    private List<Long> data;
+    private SportManResponseCreate.Meta meta;
 
     @Data
     @NoArgsConstructor
@@ -20,7 +21,7 @@ public class ApiResponse<T> {
     public static class Meta {
 
         private String message;
-        private Integer code;
+        private int code;
         private LocalDateTime date;
 
     }

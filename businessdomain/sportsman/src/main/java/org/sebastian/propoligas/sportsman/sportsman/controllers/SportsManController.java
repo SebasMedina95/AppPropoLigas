@@ -1,10 +1,17 @@
 package org.sebastian.propoligas.sportsman.sportsman.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.sebastian.propoligas.sportsman.sportsman.common.dtos.PaginationDto;
-import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponse;
+import org.sebastian.propoligas.sportsman.sportsman.common.swagger.*;
+import org.sebastian.propoligas.sportsman.sportsman.common.utils.ApiResponseConsolidation;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.CustomPagedResourcesAssembler;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ErrorsValidationsResponse;
 import org.sebastian.propoligas.sportsman.sportsman.common.utils.ResponseWrapper;
@@ -46,7 +53,19 @@ public class SportsManController {
 
     @PostMapping("/create")
     @Operation(summary = "Crear un Deportista", description = "Creación de un deportista")
-    public ResponseEntity<ApiResponse<Object>> create(
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Deportista Registrado Correctamente.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreate.class))),
+            @ApiResponse(responseCode = "406", description = "Errores en los campos de creación.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreateErrorFields.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo: " +
+                    "La persona ya se encuentra asociada como deportista.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<Object>> create(
             @Valid
             @RequestBody CreateSportsManDto sportManRequest,
             BindingResult result
@@ -55,10 +74,10 @@ public class SportsManController {
         //Validación de campos
         if(result.hasFieldErrors()){
             ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                    .body(new ApiResponseConsolidation<>(
                             errors.validation(result),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Errores en los campos de creación",
                                     HttpStatus.BAD_REQUEST.value(),
                                     LocalDateTime.now()
@@ -72,9 +91,9 @@ public class SportsManController {
         //? Si no ocurre algún error, entonces registramos :)
         if( sportManNew.getData() != null ){
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             sportManNew.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Deportista Registrado Correctamente.",
                                     HttpStatus.CREATED.value(),
                                     LocalDateTime.now()
@@ -84,9 +103,9 @@ public class SportsManController {
 
         //? Estamos en este punto, el registro no fue correcto
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 sportManNew.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -95,9 +114,27 @@ public class SportsManController {
 
     }
 
-    @GetMapping("/find-all")
-    @Operation(summary = "Obtener todos los deportistas", description = "Obtener todos los deportistas con paginación y también aplicando filtros (Filtro dinámico con entidad principal de SportsMan y con Persons de MS Externo)")
-    public ResponseEntity<ApiResponse<Object>> findAll(
+    @PostMapping("/find-all")
+    @Operation(
+            summary = "Obtener todos los deportistas",
+            description = "Obtener todos los deportistas con paginación y también aplicando filtros",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos para la paginación y búsqueda",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginationDto.class)
+                    )
+            )
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Listado de deportistas.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseList.class))),
+            @ApiResponse(responseCode = "400", description = "Errores en los campos de paginación.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseListError.class)))
+    })
+    public ResponseEntity<ApiResponseConsolidation<Object>> findAll(
             @Valid
             @RequestBody PaginationDto paginationDto,
             BindingResult result
@@ -107,9 +144,9 @@ public class SportsManController {
         if(result.hasFieldErrors()){
             ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             errors.validation(result),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Errores en los campos",
                                     HttpStatus.BAD_REQUEST.value(),
                                     LocalDateTime.now()
@@ -126,9 +163,9 @@ public class SportsManController {
 
         PagedModel<SportsManEntity> pagedModel = customPagedResourcesAssembler.toModel(comforts, uriBuilder);
 
-        return ResponseEntity.ok(new ApiResponse<>(
+        return ResponseEntity.ok(new ApiResponseConsolidation<>(
                 pagedModel,
-                new ApiResponse.Meta(
+                new ApiResponseConsolidation.Meta(
                         "Listado de deportistas.",
                         HttpStatus.OK.value(),
                         LocalDateTime.now()
@@ -138,8 +175,25 @@ public class SportsManController {
     }
 
     @GetMapping("/find-by-id/{id}")
-    @Operation(summary = "Obtener deportista por ID", description = "Obtener un deportista dado el ID")
-    public ResponseEntity<ApiResponse<Object>> findById(
+    @Operation(
+            summary = "Obtener deportista por ID",
+            description = "Obtener un deportista dado el ID",
+            parameters = {
+                    @Parameter(name = "id", description = "ID del deportista a obtener", required = true, in = ParameterIn.PATH)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Deportista encontradO.",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = SportManResponseCreate.class))),
+                    @ApiResponse(responseCode = "404", description = "Deportista no encontrado",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = SportManResponseCreateErrorGeneric.class))),
+                    @ApiResponse(responseCode = "400", description = "Error al realizar la búsqueda",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = SportManResponseCreateErrorGeneric.class)))
+            }
+    )
+    public ResponseEntity<ApiResponseConsolidation<Object>> findById(
             @PathVariable("id") String id
     ){
 
@@ -151,9 +205,9 @@ public class SportsManController {
             comfort = sportsManService.findById(comfortId);
         }catch (NumberFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El ID proporcionado para la búsqueda es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -163,9 +217,9 @@ public class SportsManController {
 
         if( comfort.getData() != null ){
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             comfort.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Deportista obtenido por ID.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -174,9 +228,9 @@ public class SportsManController {
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 comfort.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -186,8 +240,26 @@ public class SportsManController {
     }
 
     @PutMapping("update-by-id/{id}")
-    @Operation(summary = "Actualizar un deportista", description = "Actualizar un deportista dado el ID")
-    public ResponseEntity<ApiResponse<Object>> update(
+    @Operation(
+            summary = "Actualizar un deportista",
+            description = "Actualizar un deportista dado el ID",
+            parameters = {
+                    @Parameter(name = "id", description = "ID para la actualización", required = true)
+            }
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Deportista Actualizado Correctamente.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreate.class))),
+            @ApiResponse(responseCode = "406", description = "Errores en los campos de creación.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreateErrorFields.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo: " +
+                    "La persona ya se encuentra asociada como deportista.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<Object>> update(
             @Valid
             @RequestBody UpdateSportsManDto sportsManRequest,
             BindingResult result,
@@ -197,9 +269,9 @@ public class SportsManController {
         if(result.hasFieldErrors()){
             ErrorsValidationsResponse errors = new ErrorsValidationsResponse();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             errors.validation(result),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Errores en los campos de actualización",
                                     HttpStatus.BAD_REQUEST.value(),
                                     LocalDateTime.now()
@@ -215,9 +287,9 @@ public class SportsManController {
             sportsManEntityUpdate = sportsManService.update(sportsManId, sportsManRequest);
         }catch (NumberFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El ID proporcionado es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -227,9 +299,9 @@ public class SportsManController {
 
         if( sportsManEntityUpdate.getData() != null ){
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             sportsManEntityUpdate.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Deportista Actualizado Correctamente.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -238,9 +310,9 @@ public class SportsManController {
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 sportsManEntityUpdate.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
@@ -250,8 +322,23 @@ public class SportsManController {
     }
 
     @DeleteMapping("/delete-by-id/{id}")
-    @Operation(summary = "Eliminar un deportista", description = "Eliminar un deportista pero de manera lógica")
-    public ResponseEntity<ApiResponse<SportsManEntity>> delete(
+    @Operation(
+            summary = "Eliminar un deportista",
+            description = "Eliminar un deportista pero de manera lógica",
+            parameters = {
+                    @Parameter(name = "id", description = "ID del deportista a eliminar", required = true)
+            }
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Deportista Eliminado Correctamente.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreate.class))),
+            @ApiResponse(responseCode = "400", description = "Cualquier otro caso de error, incluyendo: " +
+                    "El ID proporcionado para eliminar es inválido.",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SportManResponseCreateErrorGeneric.class))),
+    })
+    public ResponseEntity<ApiResponseConsolidation<SportsManEntity>> delete(
             @PathVariable("id") String id
     ){
 
@@ -262,9 +349,9 @@ public class SportsManController {
             sportsManUpdate = sportsManService.delete(sportManId);
         }catch (NumberFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             null,
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "El ID proporcionado es inválido.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -274,9 +361,9 @@ public class SportsManController {
 
         if( sportsManUpdate.getData() != null ){
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ApiResponse<>(
+                    .body(new ApiResponseConsolidation<>(
                             sportsManUpdate.getData(),
-                            new ApiResponse.Meta(
+                            new ApiResponseConsolidation.Meta(
                                     "Deportista Eliminado Correctamente.",
                                     HttpStatus.OK.value(),
                                     LocalDateTime.now()
@@ -285,9 +372,9 @@ public class SportsManController {
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(
+                .body(new ApiResponseConsolidation<>(
                         null,
-                        new ApiResponse.Meta(
+                        new ApiResponseConsolidation.Meta(
                                 sportsManUpdate.getErrorMessage(),
                                 HttpStatus.BAD_REQUEST.value(),
                                 LocalDateTime.now()
