@@ -55,7 +55,7 @@ public class SportsManServiceImpl implements SportsManService {
                 logger.warn("Ocurrió algo en el servicio de MS Persons, persona no hallada o MS caído");
                 return new ResponseWrapper<>(
                         null,
-                        "La persona para ser asociada al deportista no fue hallada"
+                        "La persona para ser asociada al deportista no fue hallada en la búsqueda"
                 );
             }
 
