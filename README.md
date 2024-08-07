@@ -36,9 +36,9 @@ posicione en cada uno ded los micros y ejecute el comando de docker:
 $ docker compose up -d
 ````
 
-* La documentación de los proyectos en ambiente de desarrollo están
+* La documentación _SWAGGER_ de los proyectos en ambiente de desarrollo están
 en las siguientes URL (Puede acceder desde cualquier navegador):
-
+  
   * <<< MS DE PERSONAS >>>
     ````dockerfile
     $ http://localhost:13551/swagger-ui/index.html
@@ -53,3 +53,26 @@ Estamos trabajando un _MONOREPO_ para esta aplicación, lo que quiere decir que
 todos los micro servicios se encuentran alojados dentro de un proyecto de maven,
 generando una programación "por dominios", pero cada uno de los MS se encuentra
 independizado, y si uno requiere de otro, implementa la comunicación con Feign.
+
+# Ejecución de aplicaciones pero por perfiles:
+Una vez compilada la aplicación y generado el JAR usando Clean-Compile-Install
+desde las opciones de Maven, para poder ejecutar con un perfil específico el JAR
+generado en una consola aparte, usamos el comando:
+````dockerfile
+$ java -jar .\persons-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+````
+_Explicación del comando:_ Nos ubicamos en la carpeta donde se encuentre el JAR,
+ejecutamos el comando por consola, pero, le agregamos la bandera de
+--spring.profiles.active=dev, el *dev* sale del nombre que le dimos al archivo
+application-dev.properties, después del - el nombre que le hayamos dado, en este 
+caso, le dimos dev, entonces está será la bandera y ejecutamos la aplicación con
+las configuraciones de ese archivo.
+
+Si no aplico la bandera --spring.profiles.active=dev entonces la aplicación tomará
+la configuración por defecto, es decir, tomará el application.properties, es muy
+importante tener esto en cuenta.
+
+Se tiene pensado 3 ambientes de trabajo:
+* *dev* = Ambiente de Desarrollo
+* *qa* = Ambiente de Pruebas
+* *pdn* = Ambiente de Producción
