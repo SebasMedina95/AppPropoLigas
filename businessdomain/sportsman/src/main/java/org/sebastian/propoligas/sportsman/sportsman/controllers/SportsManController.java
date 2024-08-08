@@ -35,7 +35,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/sportsman")
+@RequestMapping("/v1/api/sportsman")
 @Tag(name = "Controlador de Deportistas", description = "Operaciones relacionadas con los deportistas")
 public class SportsManController {
 

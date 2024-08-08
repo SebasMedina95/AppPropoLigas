@@ -36,7 +36,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/persons")
+@RequestMapping("/v1/api/persons")
 @Tag(name = "Controlador de MicroServicio Personas", description = "Operaciones relacionadas con el micro servicio de personas")
 public class PersonController {
 

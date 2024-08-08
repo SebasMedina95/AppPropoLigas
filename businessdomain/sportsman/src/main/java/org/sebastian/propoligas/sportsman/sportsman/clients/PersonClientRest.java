@@ -11,7 +11,7 @@ import java.util.List;
 
 //? Ojo, name tiene que ser spring.application.name del micro servicio a relacionar.
 //? Ojo, url La URL es el LocalHost hasta antes de la definición del método.
-@FeignClient(name = "persons", url = "localhost:13551/api/persons")
+@FeignClient(name = "persons", url = "localhost:13551/business/v1/api/persons")
 public interface PersonClientRest {
 
     @GetMapping("/find-by-id/{id}")
