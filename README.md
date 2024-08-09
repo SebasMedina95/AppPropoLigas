@@ -41,11 +41,11 @@ en las siguientes URL (Puede acceder desde cualquier navegador):
   
   * <<< MS DE PERSONAS >>>
     ````dockerfile
-    $ http://localhost:13551/swagger-ui/index.html
+    $ http://localhost:13551/business/swagger-ui/index.html
     ````
   * <<< MS DE DEPORTISTAS >>>
     ````dockerfile
-    $ http://localhost:13552/swagger-ui/index.html
+    $ http://localhost:13552/business/swagger-ui/index.html
     ````
 
 # Información adicional:
