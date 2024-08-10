@@ -31,9 +31,20 @@ Desarrollador de Backend: [Juan Sebastian Medina Toro](https://www.linkedin.com/
 Para correr la aplicación en ambiente de desarrollo necesitamos:
 
 * Levantar las bases de datos de cada micro servicio, requerimos que se
-posicione en cada uno ded los micros y ejecute el comando de docker:
+posicione en cada uno de los micros y ejecute el comando de docker que le 
+corresponda:
+
 ````dockerfile
-$ docker compose up -d
+**************************************
+*** Para el MS de persons ejecute: ***
+**************************************
+docker-compose -p ms_propoligas_persons up -d
+````
+````dockerfile
+****************************************
+*** Para el MS de sportsman ejecute: ***
+****************************************
+docker-compose -p ms_propoligas_sportsman up -d
 ````
 
 * La documentación _SWAGGER_ de los proyectos en ambiente de desarrollo están

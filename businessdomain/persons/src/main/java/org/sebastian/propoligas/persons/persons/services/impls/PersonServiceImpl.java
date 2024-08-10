@@ -129,6 +129,10 @@ public class PersonServiceImpl implements PersonService {
 
         logger.info("Iniciando Acción - Actualizar una persona dado su ID");
 
+        if( person.getEmail().length() >= 4 ){
+
+        }
+
         try{
 
             Optional<PersonEntity> personOptional = personRepository.findById(id);
