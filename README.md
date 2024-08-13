@@ -15,7 +15,7 @@ en cada uno de los controladores la respectiva documentación Swagger.
 Las diferentes bases de datos están manejadas con contenedores de Docker para tener
 mejor independizadas las tareas así como mantenibilidad de la aplicación.
 
-* _MÓDULOS (MICROS) TENTATIVOS:_
+* _**MÓDULOS (MICROS) TENTATIVOS**:_
   * Personas
   * Deportistas
   * Torneos
@@ -24,13 +24,17 @@ mejor independizadas las tareas así como mantenibilidad de la aplicación.
   * Entrenamiento
   * Usuarios (Autorización / Autenticación)
 
-### Desarrollado por: ###
-Desarrollador de Backend: [Juan Sebastian Medina Toro](https://www.linkedin.com/in/juan-sebastian-medina-toro-887491249/)
+---------------------------------------------------------------------------------------
+
+# Desarrollado por: #
+Desarrollador de Backend: [Juan Sebastian Medina Toro](https://www.linkedin.com/in/juan-sebastian-medina-toro-887491249/).
+
+---------------------------------------------------------------------------------------
 
 ### Levantamiento de la aplicación:
 Para correr la aplicación en ambiente de desarrollo necesitamos:
 
-**NOTA:** Si no vamos a usar la imagen ya docherizada pues levantamos la base de
+**NOTA:** Si no vamos a usar la imagen ya dockerizada, podemos levantar la base de
 datos solamente con los comandos de a continuación, en caso contrario, bastaría
 con ejecutar la imagen y levantamos tanto la aplicación como el contenedor, pero,
 _haga esta parte si ya la aplicación está completamente desarrollada_. 
@@ -51,7 +55,16 @@ docker-compose -p ms_propoligas_persons up -d
 docker-compose -p ms_propoligas_sportsman up -d
 ````
 
-* La documentación _SWAGGER_ de los proyectos en ambiente de desarrollo están
+En caso de levantar con imagen dockerizada, solo bastaría el comando
+````dockerfile
+$ docker-compose -p ms_propoligas_container-persons up -d
+````
+Este comando se explica más a detalle cuando generamos el tema de la imagen,
+que en últimas lo que hacemos es que generamos el contenedor en embebido.
+
+---------------------------------------------------------------------------------------
+# DOCUMENTACIÓN SWAGGER #
+* La documentación _**SWAGGER**_ de los proyectos en ambiente de desarrollo están
 en las siguientes URL (Puede acceder desde cualquier navegador):
   
   * <<< MS DE PERSONAS >>>
@@ -73,7 +86,7 @@ en las siguientes URL (Puede acceder desde cualquier navegador):
 $ docker build -t propoligas_person_image --no-cache --build-arg JAR_FILE=target/*.jar .
 ````
 
-* Levantamiento de la imagen una vez se haya creado:
+* Levantamiento de la imagen y el contenedor de una vez:
 ````dockerfile
 *** Usar primero el comando: ***
 *** Si dado el caso tira dificultades, primero ejecutelo sin el -d y luego con el -d***
@@ -93,13 +106,6 @@ deseada, de este modo se tendrá información de prueba, por ahora no se contemp
 End Point para este tema.
 
 ---------------------------------------------------------------------------------------
-# INFORMACIÓN ADICIONAL:
-
-Estamos trabajando un _MONOREPO_ para esta aplicación, lo que quiere decir que
-todos los micro servicios se encuentran alojados dentro de un proyecto de maven,
-generando una programación "por dominios", pero cada uno de los MS se encuentra
-independizado, y si uno requiere de otro, implementa la comunicación con Feign.
-
 # Ejecución de aplicaciones pero por perfiles:
 Una vez compilada la aplicación y generado el JAR usando Clean-Compile-Install
 desde las opciones de Maven, para poder ejecutar con un perfil específico el JAR
@@ -122,3 +128,10 @@ Se tiene pensado 3 ambientes de trabajo:
 * *dev* = Ambiente de Desarrollo
 * *qa* = Ambiente de Pruebas
 * *pdn* = Ambiente de Producción
+
+---------------------------------------------------------------------------------------
+# INFORMACIÓN ADICIONAL:
+Estamos trabajando un _**MONOREPO**_ para esta aplicación, lo que quiere decir que
+todos los micro servicios se encuentran alojados dentro de un proyecto de maven,
+generando una programación "por dominios", pero cada uno de los MS se encuentra
+independizado, y si uno requiere de otro, implementa la comunicación con Feign.
