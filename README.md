@@ -81,6 +81,18 @@ $ docker-compose -p ms_propoligas_container-persons up -d
 ````
 
 ---------------------------------------------------------------------------------------
+# SEED (Ambiente de desarrollo)
+Hasta la fecha (Agost 13/2024) no se ha planteado un seed para estos casos, sin embargo,
+se está desarrollando por medio de contenedores y en cada MS se está generado en DEV una
+carpeta llamada **``containers``**, esta carpeta contiene la información en local para las
+pruebas, por tanto, en la raíz del macro proyecto propoligas encontramos una carpeta
+llamada ``backup``, esta carpeta contiene un .rar actualizado por fechas de la información,
+lo único que se tendría que hacer es si no se tiene información al levantar la imagen, es
+descomprimir el .rar actualizado y pegarlo en la raíz del containers de la aplicación
+deseada, de este modo se tendrá información de prueba, por ahora no se contempla un 
+End Point para este tema.
+
+---------------------------------------------------------------------------------------
 # INFORMACIÓN ADICIONAL:
 
 Estamos trabajando un _MONOREPO_ para esta aplicación, lo que quiere decir que
