@@ -1,5 +1,10 @@
 version: '3.8'
 
+# Implementamos red interna para hacer pruebas en local pero local Dockerizado
+networks:
+  propoligas-network:
+    external: true
+
 services:
 
   # Configuración para la base de datos
@@ -10,18 +15,20 @@ services:
       POSTGRES_USER: propoligas_persons
       POSTGRES_DB: propoligas_persons_db
       POSTGRES_PASSWORD: propoligas_persons123
-    container_name: apppropoligas_ms_persons
+    container_name: apppropoligas_ms_persons_db
     volumes:
       - ./containers/postgres:/var/lib/postgresql/data
     ports:
       - 15335:5432
+    networks:
+      - propoligas-network
 
   # Configuración para incluir la aplicación y conexiones con la base de datos
-  spring-boot-app:
+  persons-app-ms:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: springboot_microservice_propoligas_persons
+    container_name: springboot_microservice_propoligas_persons_app
     ports:
       - "22335:8080"
     environment:
@@ -30,3 +37,5 @@ services:
       - SPRING_DATASOURCE_PASSWORD=propoligas_persons123
     depends_on:
       - postgres-db
+    networks:
+      - propoligas-network

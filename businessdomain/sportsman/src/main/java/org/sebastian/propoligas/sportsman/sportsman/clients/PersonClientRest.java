@@ -9,9 +9,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
+//! NOTA -> El microservicio se encuentra dockerizado
 //? Ojo, name tiene que ser spring.application.name del micro servicio a relacionar.
 //? Ojo, url La URL es el LocalHost hasta antes de la definición del método.
-@FeignClient(name = "persons", url = "localhost:13551/business/v1/api/persons")
+
+//? Nota1, el puerto es 13551 en 100% local, pero, al dockerizar queda siendo 22335
+//? Nota2, el puerto es 22335 como requerimos una consulta interna usamos el puerto interno, es decir, 8080
+//? Nota3, para no tener que crear una red interna, apuntemos al contenedor de docker en vez de localhost
+@FeignClient(name = "persons", url = "persons-app-ms:8080/business/v1/api/persons")
 public interface PersonClientRest {
 
     @GetMapping("/find-by-id/{id}")

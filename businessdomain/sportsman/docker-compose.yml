@@ -1,7 +1,13 @@
 version: '3.8'
 
+# Implementamos red interna para hacer pruebas en local pero local Dockerizado
+networks:
+  propoligas-network:
+    external: true
+
 services:
 
+  # Configuración para la base de datos
   postgres-db:
     image: postgres:16.3-alpine3.19
     restart: always
@@ -9,8 +15,27 @@ services:
       POSTGRES_USER: propoligas_sportsman
       POSTGRES_DB: propoligas_sportsman_db
       POSTGRES_PASSWORD: propoligas_sportsman123
-    container_name: apppropoligas_ms_sportsman
+    container_name: apppropoligas_ms_sportsman_db
     volumes:
       - ./containers/postgres:/var/lib/postgresql/data
     ports:
       - 15336:5432
+    networks:
+      - propoligas-network
+
+  # Configuración para incluir la aplicación y conexiones con la base de datos
+  sportsman-app-ms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: springboot_microservice_propoligas_sportsman_app
+    ports:
+      - "22336:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/propoligas_sportsman_db
+      - SPRING_DATASOURCE_USERNAME=propoligas_sportsman
+      - SPRING_DATASOURCE_PASSWORD=propoligas_sportsman123
+    depends_on:
+      - postgres-db
+    networks:
+      - propoligas-network

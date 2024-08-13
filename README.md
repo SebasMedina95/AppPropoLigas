@@ -87,10 +87,30 @@ $ docker build -t propoligas_person_image --no-cache --build-arg JAR_FILE=target
 ````
 
 * Levantamiento de la imagen y el contenedor de una vez:
+**Tendremos algunos casos en los que ya tenemos definido el ``docker-compose.yml`` que tiene la info**
+**de la base de datos en docker y allí combinamos esto con la imagen de docker que generaremos;**
+**este será el caso más general que tendremos en esta APP, por tanto, siempre que vayamos a**
+**generar el archivo, ``nos paramos en la raíz del micro servicio y ejecutamos el comando siguiente``:**
+
+NOTA: Lo único que cambia es el como se llama el JAR generado luego de Clean-Compile-Install.
+
+* Usar primero el comando:
 ````dockerfile
-*** Usar primero el comando: ***
-*** Si dado el caso tira dificultades, primero ejecutelo sin el -d y luego con el -d***
+$ docker network create propoligas-network
+````
+Debemos crear una red virtual para comunicar internamente cada contenedor en local (porque ya están
+dockerizados). El comando solo se ejecuta una vez, por lo general.
+
+* Luego usamos el comando:
+````dockerfile
 $ docker-compose -p ms_propoligas_container-persons up -d
+````
+El comando anterior fue para el ``MS de Persons``, cambia el nombre según el MS a ejecutar y debemos estar
+posicionados en el micro servicio al que le vamos a hacer la generación
+
+* Verificamos que los contenedores con sus respectivas BD queden dentro de la red usando el comando:
+````dockerfile
+$ docker network inspect propoligas-network
 ````
 
 ---------------------------------------------------------------------------------------
