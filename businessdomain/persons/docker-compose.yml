@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
 
+  # Configuración para la base de datos
   postgres-db:
     image: postgres:16.3-alpine3.19
     restart: always
@@ -14,3 +15,18 @@ services:
       - ./containers/postgres:/var/lib/postgresql/data
     ports:
       - 15335:5432
+
+  # Configuración para incluir la aplicación y conexiones con la base de datos
+  spring-boot-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: springboot_microservice_propoligas_persons
+    ports:
+      - "22335:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/propoligas_persons_db
+      - SPRING_DATASOURCE_USERNAME=propoligas_persons
+      - SPRING_DATASOURCE_PASSWORD=propoligas_persons123
+    depends_on:
+      - postgres-db

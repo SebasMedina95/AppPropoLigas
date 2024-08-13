@@ -30,6 +30,10 @@ Desarrollador de Backend: [Juan Sebastian Medina Toro](https://www.linkedin.com/
 ### Levantamiento de la aplicación:
 Para correr la aplicación en ambiente de desarrollo necesitamos:
 
+**NOTA:** Si no vamos a usar la imagen ya docherizada pues levantamos la base de
+datos solamente con los comandos de a continuación, en caso contrario, bastaría
+con ejecutar la imagen y levantamos tanto la aplicación como el contenedor, pero,
+_haga esta parte si ya la aplicación está completamente desarrollada_. 
 * Levantar las bases de datos de cada micro servicio, requerimos que se
 posicione en cada uno de los micros y ejecute el comando de docker que le 
 corresponda:
@@ -58,8 +62,27 @@ en las siguientes URL (Puede acceder desde cualquier navegador):
     ````dockerfile
     $ http://localhost:13552/business/swagger-ui/index.html
     ````
+---------------------------------------------------------------------------------------
+# EJECUCIÓN DE IMÁGENES DE DOCKER #
 
-# Información adicional:
+* Ejecutando el comando para crear la imagen estando dentro del proyecto persons 
+ (raíz dónde está el Dockerfile - Este comando lo ejecutamos si haremos la
+  ejecución por segmentos, sino, entonces podríamos ejecutar el comando que
+  sigue a continuación [docker-compose] ):
+````dockerfile
+$ docker build -t propoligas_person_image --no-cache --build-arg JAR_FILE=target/*.jar .
+````
+
+* Levantamiento de la imagen una vez se haya creado:
+````dockerfile
+*** Usar primero el comando: ***
+*** Si dado el caso tira dificultades, primero ejecutelo sin el -d y luego con el -d***
+$ docker-compose -p ms_propoligas_container-persons up -d
+````
+
+---------------------------------------------------------------------------------------
+# INFORMACIÓN ADICIONAL:
+
 Estamos trabajando un _MONOREPO_ para esta aplicación, lo que quiere decir que
 todos los micro servicios se encuentran alojados dentro de un proyecto de maven,
 generando una programación "por dominios", pero cada uno de los MS se encuentra
