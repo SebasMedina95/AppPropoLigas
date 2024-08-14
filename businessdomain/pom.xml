@@ -22,6 +22,7 @@
     <modules>
         <module>persons</module>
         <module>sportsman</module>
+        <module>users</module>
     </modules>
 
     <!-- Propiedades generales y definición de variables -->

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!-- EL PADRE SERÁ NUESTRO businessdomain Y ESTE HEREDA DE propoligas -->
+	<parent>
+		<groupId>org.sebastian.propoligas.businessdomain</groupId>
+		<artifactId>businessdomain</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>org.sebastian.propoligas</groupId>
+	<artifactId>users</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>users</name>
+	<description>Microservicio de usuarios</description>
+	<packaging>jar</packaging>
+
+	<!-- LAS DEPENDENCIAS NO IRÍAN PORQUE EL PADRE YA LAS TIENE DEFINIDAS -->
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
